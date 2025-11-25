@@ -65,17 +65,17 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
           <StatusBar style="dark" />
+          {/* 
+            Expo Router auto-discovers routes from the file system.
+            Only declare screens when you need to customize options.
+          */}
           <Stack
             screenOptions={{
               headerShown: false,
               contentStyle: { backgroundColor: '#F8F6F2' },
               animation: 'fade',
             }}
-          >
-            <Stack.Screen name="index" />
-            <Stack.Screen name="onboarding/index" />
-            <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
-          </Stack>
+          />
         </View>
       </QueryClientProvider>
     </SafeAreaProvider>
