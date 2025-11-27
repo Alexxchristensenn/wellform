@@ -184,6 +184,41 @@ This smooths daily fluctuations (water, sodium, digestion) to show the user's **
 
 ---
 
+### Collection: `users/{uid}/journey/progress` (Single Document)
+
+*Tracks curriculum progress through the Golden Rules. Created after onboarding.*
+
+```json
+{
+  "completedRules": ["golden-001", "golden-002"],
+  "currentLevel": "foundation",
+  "lastCompletedAt": 1732521600000,
+  "startedAt": 1732000000000
+}
+```
+
+**Field Definitions:**
+
+| Field            | Type     | Description                                           |
+|------------------|----------|-------------------------------------------------------|
+| `completedRules` | String[] | Array of completed Golden Rule IDs                    |
+| `currentLevel`   | String   | Current mastery level: foundation/intermediate/advanced |
+| `lastCompletedAt`| Number   | Unix timestamp of last lesson completion (or null)    |
+| `startedAt`      | Number   | Unix timestamp when journey began                     |
+
+**Level Unlock Criteria:**
+- **Foundation:** Always unlocked (start here)
+- **Intermediate:** Complete all Foundation lessons (7 lessons)
+- **Advanced:** Complete all Intermediate lessons (6 lessons)
+
+**Lesson Status Logic:**
+1. `completed` — Rule ID exists in `completedRules`
+2. `current` — First incomplete lesson in unlocked level
+3. `available` — In unlocked level, previous lesson complete
+4. `locked` — In locked level OR previous lesson incomplete
+
+---
+
 ## 3. AI Integration (OpenAI)
 
 **Model:** `gpt-4o-mini` (Cost-effective, vision-capable).

@@ -19,9 +19,11 @@ import {
   doc, 
   setDoc, 
   getDoc,
+  onSnapshot,
   Firestore,
+  Unsubscribe,
 } from 'firebase/firestore';
-import { UserProfile, MealType, PlateCheckMeal, DayLog, WeightLog } from '../types/schema';
+import { UserProfile, MealType, PlateCheckMeal, DayLog, WeightLog, JourneyDocument } from '../types/schema';
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -314,6 +316,163 @@ export async function logWeightToFirestore(
     return true;
   } catch (error) {
     console.error('Failed to log weight:', error);
+    return false;
+  }
+}
+
+// ============================================================================
+// CURRICULUM JOURNEY (SIM-009: The Path)
+// ============================================================================
+
+/**
+ * Get journey document from Firestore
+ * Path: users/{uid}/journey
+ */
+export async function getJourney(uid: string): Promise<JourneyDocument | null> {
+  const db = getFirestoreInstance();
+  
+  if (!db) {
+    console.warn('Firestore not available.');
+    return null;
+  }
+
+  try {
+    const journeyRef = doc(db, 'users', uid, 'journey', 'progress');
+    const snapshot = await getDoc(journeyRef);
+    
+    if (snapshot.exists()) {
+      return snapshot.data() as JourneyDocument;
+    }
+    return null;
+  } catch (error) {
+    console.error('Failed to get journey:', error);
+    return null;
+  }
+}
+
+/**
+ * Subscribe to journey document changes
+ * Path: users/{uid}/journey
+ * 
+ * Returns an unsubscribe function to clean up the listener.
+ */
+export function subscribeToJourney(
+  uid: string,
+  callback: (journey: JourneyDocument | null) => void
+): Unsubscribe | null {
+  const db = getFirestoreInstance();
+  
+  if (!db) {
+    console.warn('Firestore not available.');
+    callback(null);
+    return null;
+  }
+
+  try {
+    const journeyRef = doc(db, 'users', uid, 'journey', 'progress');
+    
+    return onSnapshot(journeyRef, (snapshot) => {
+      if (snapshot.exists()) {
+        callback(snapshot.data() as JourneyDocument);
+      } else {
+        callback(null);
+      }
+    }, (error) => {
+      console.error('Journey subscription error:', error);
+      callback(null);
+    });
+  } catch (error) {
+    console.error('Failed to subscribe to journey:', error);
+    return null;
+  }
+}
+
+/**
+ * Initialize journey document for new users
+ * Path: users/{uid}/journey
+ * 
+ * Called after onboarding is complete.
+ */
+export async function initializeJourney(uid: string): Promise<boolean> {
+  const db = getFirestoreInstance();
+  
+  if (!db) {
+    console.warn('Firestore not available. Journey not initialized.');
+    return false;
+  }
+
+  try {
+    const journeyRef = doc(db, 'users', uid, 'journey', 'progress');
+    
+    // Check if already exists
+    const existing = await getDoc(journeyRef);
+    if (existing.exists()) {
+      return true; // Already initialized
+    }
+    
+    const journey: JourneyDocument = {
+      completedRules: [],
+      currentLevel: 'foundation',
+      lastCompletedAt: null,
+      startedAt: Date.now(),
+    };
+
+    await setDoc(journeyRef, journey);
+    return true;
+  } catch (error) {
+    console.error('Failed to initialize journey:', error);
+    return false;
+  }
+}
+
+/**
+ * Mark a lesson as complete
+ * Path: users/{uid}/journey
+ * 
+ * Adds the rule ID to completedRules and updates level if needed.
+ */
+export async function completeLessonInFirestore(
+  uid: string,
+  ruleId: string,
+  newLevel?: 'foundation' | 'intermediate' | 'advanced'
+): Promise<boolean> {
+  const db = getFirestoreInstance();
+  
+  if (!db) {
+    console.warn('Firestore not available. Lesson completion not saved.');
+    return false;
+  }
+
+  try {
+    const journeyRef = doc(db, 'users', uid, 'journey', 'progress');
+    
+    // Get current journey
+    const snapshot = await getDoc(journeyRef);
+    const currentJourney = snapshot.exists() 
+      ? snapshot.data() as JourneyDocument 
+      : {
+          completedRules: [],
+          currentLevel: 'foundation' as const,
+          lastCompletedAt: null,
+          startedAt: Date.now(),
+        };
+    
+    // Add ruleId if not already completed
+    if (!currentJourney.completedRules.includes(ruleId)) {
+      currentJourney.completedRules.push(ruleId);
+    }
+    
+    // Update level if provided
+    if (newLevel) {
+      currentJourney.currentLevel = newLevel;
+    }
+    
+    currentJourney.lastCompletedAt = Date.now();
+
+    await setDoc(journeyRef, currentJourney);
+    return true;
+  } catch (error) {
+    console.error('Failed to complete lesson:', error);
     return false;
   }
 }

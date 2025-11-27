@@ -170,6 +170,33 @@ export interface WeightTrend {
 }
 
 // ============================================================================
+// CURRICULUM JOURNEY (SIM-009: The Path)
+// ============================================================================
+
+/**
+ * Lesson status for curriculum progression
+ */
+export type LessonStatus = 'completed' | 'current' | 'available' | 'locked';
+
+/**
+ * Mastery levels for curriculum organization
+ */
+export type MasteryLevel = 'foundation' | 'intermediate' | 'advanced';
+
+/**
+ * Journey Document - Tracks curriculum progress
+ * Firestore path: users/{uid}/journey (single document)
+ * 
+ * @see SIM-009 for implementation details
+ */
+export interface JourneyDocument {
+  completedRules: string[];      // ['golden-001', 'golden-002', ...]
+  currentLevel: MasteryLevel;
+  lastCompletedAt: number | null; // Unix timestamp
+  startedAt: number;              // Unix timestamp
+}
+
+// ============================================================================
 // AI INTEGRATION
 // ============================================================================
 
