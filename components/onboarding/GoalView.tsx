@@ -6,6 +6,7 @@
  */
 
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { hapticLight } from '../../utils/haptics';
 import Animated, {
   FadeIn,
   FadeInUp,
@@ -82,7 +83,10 @@ export default function GoalView({ goal, onGoalChange, onNext, onBack }: Props) 
               entering={FadeInUp.duration(400).delay(index * 100)}
             >
               <Pressable
-                onPress={() => onGoalChange(g.id)}
+                onPress={() => {
+                  hapticLight();
+                  onGoalChange(g.id);
+                }}
                 style={[
                   styles.goalCard,
                   { backgroundColor: g.bgColor },
@@ -117,7 +121,10 @@ export default function GoalView({ goal, onGoalChange, onNext, onBack }: Props) 
 
           <AnimatedPressable
             onPress={onNext}
-            onPressIn={() => { buttonScale.value = withSpring(0.95); }}
+            onPressIn={() => { 
+              hapticLight();
+              buttonScale.value = withSpring(0.95); 
+            }}
             onPressOut={() => { buttonScale.value = withSpring(1); }}
             style={[styles.nextButton, buttonStyle]}
           >

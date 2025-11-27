@@ -6,6 +6,7 @@
  */
 
 import { View, Text, Pressable, StyleSheet, TextInput, ScrollView } from 'react-native';
+import { hapticLight, hapticSelection } from '../../utils/haptics';
 import Animated, {
   FadeIn,
   useAnimatedStyle,
@@ -62,7 +63,10 @@ export default function BioView({ sex, age, onSexChange, onAgeChange, onNext, on
           <Text style={styles.sectionLabel}>Biological Sex</Text>
           <View style={styles.toggleRow}>
             <Pressable
-              onPress={() => onSexChange('female')}
+              onPress={() => {
+                hapticLight();
+                onSexChange('female');
+              }}
               style={[styles.toggleButton, sex === 'female' && styles.toggleActive]}
             >
               <Text style={styles.toggleIcon}>♀</Text>
@@ -72,7 +76,10 @@ export default function BioView({ sex, age, onSexChange, onAgeChange, onNext, on
             </Pressable>
 
             <Pressable
-              onPress={() => onSexChange('male')}
+              onPress={() => {
+                hapticLight();
+                onSexChange('male');
+              }}
               style={[styles.toggleButton, sex === 'male' && styles.toggleActive]}
             >
               <Text style={styles.toggleIcon}>♂</Text>
@@ -98,20 +105,25 @@ export default function BioView({ sex, age, onSexChange, onAgeChange, onNext, on
             />
             <Text style={styles.ageUnit}>years old</Text>
           </View>
-          <Slider
-            style={styles.slider}
-            minimumValue={13}
-            maximumValue={100}
-            step={1}
-            value={ageNum}
-            onValueChange={(val) => onAgeChange(String(Math.round(val)))}
-            minimumTrackTintColor="#1c1917"
-            maximumTrackTintColor="#e7e5e4"
-            thumbTintColor="#1c1917"
-          />
-          <View style={styles.sliderLabels}>
-            <Text style={styles.sliderLabel}>13</Text>
-            <Text style={styles.sliderLabel}>100</Text>
+          <View style={styles.sliderWrapper}>
+            <Slider
+              style={styles.slider}
+              minimumValue={13}
+              maximumValue={100}
+              step={1}
+              value={ageNum}
+              onValueChange={(val) => {
+                hapticSelection();
+                onAgeChange(String(Math.round(val)));
+              }}
+              minimumTrackTintColor="#1c1917"
+              maximumTrackTintColor="#e7e5e4"
+              thumbTintColor="#1c1917"
+            />
+            <View style={styles.sliderLabels}>
+              <Text style={styles.sliderLabel}>13</Text>
+              <Text style={styles.sliderLabel}>100</Text>
+            </View>
           </View>
         </View>
 
@@ -123,7 +135,10 @@ export default function BioView({ sex, age, onSexChange, onAgeChange, onNext, on
 
           <AnimatedPressable
             onPress={isValid ? onNext : undefined}
-            onPressIn={() => { buttonScale.value = withSpring(0.95); }}
+            onPressIn={() => { 
+              hapticLight();
+              buttonScale.value = withSpring(0.95); 
+            }}
             onPressOut={() => { buttonScale.value = withSpring(1); }}
             style={[styles.nextButton, !isValid && styles.buttonDisabled, buttonStyle]}
             disabled={!isValid}
@@ -231,26 +246,28 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   ageDisplay: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   ageInput: {
     fontFamily: 'PlayfairDisplay_600SemiBold',
-    fontSize: 48,
+    fontSize: 56,
     color: '#1c1917',
-    minWidth: 80,
-    textAlign: 'right',
-    borderBottomWidth: 2,
-    borderBottomColor: '#e7e5e4',
-    paddingBottom: 4,
+    textAlign: 'center',
+    includeFontPadding: false,
+    padding: 0,
   },
   ageUnit: {
     fontFamily: 'Manrope_400Regular',
-    fontSize: 16,
+    fontSize: 15,
     color: '#78716c',
+    marginTop: 4,
+  },
+  sliderWrapper: {
+    width: '100%',
+    maxWidth: 300,
+    alignSelf: 'center',
   },
   slider: {
     width: '100%',

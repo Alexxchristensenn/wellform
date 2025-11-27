@@ -6,6 +6,7 @@
  */
 
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { hapticLight } from '../../utils/haptics';
 import Animated, {
   FadeIn,
   FadeInUp,
@@ -56,7 +57,10 @@ export default function ActivityView({ activity, onActivityChange, onNext, onBac
               entering={FadeInUp.duration(400).delay(index * 80)}
             >
               <Pressable
-                onPress={() => onActivityChange(level.value)}
+                onPress={() => {
+                  hapticLight();
+                  onActivityChange(level.value);
+                }}
                 style={[
                   styles.activityCard,
                   isSelected && styles.activityCardActive,
@@ -94,7 +98,10 @@ export default function ActivityView({ activity, onActivityChange, onNext, onBac
 
         <AnimatedPressable
           onPress={onNext}
-          onPressIn={() => { buttonScale.value = withSpring(0.95); }}
+          onPressIn={() => { 
+            hapticLight();
+            buttonScale.value = withSpring(0.95); 
+          }}
           onPressOut={() => { buttonScale.value = withSpring(1); }}
           style={[styles.nextButton, buttonStyle]}
         >

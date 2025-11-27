@@ -5,9 +5,10 @@
  * Saves user profile to Firebase and navigates to home.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { router } from 'expo-router';
+import { hapticLight, hapticSuccess } from '../../utils/haptics';
 import Animated, {
   FadeIn,
   FadeInUp,
@@ -21,6 +22,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { calculateMacros, MacroInput } from '../../utils/calculateMacros';
 import { signInAnonymously, saveUserProfile } from '../../services/firebase';
+import TapthroughModal, { TapthroughSlide } from '../modals/TapthroughModal';
 
 interface Props {
   formData: {
@@ -39,12 +41,61 @@ interface Props {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+// Goal-specific final slides
+const GOAL_SLIDES: Record<string, TapthroughSlide> = {
+  weight_loss: {
+    id: 'first-week',
+    icon: '🎯',
+    title: "Your First Week",
+    body: "Focus on protein at every meal. Log your Plate Checks. Weigh yourself a few times. We'll handle the math—you just eat.",
+    accentColor: '#ef4444',
+  },
+  muscle_gain: {
+    id: 'first-week',
+    icon: '💪',
+    title: "Your First Week",
+    body: "That protein target is non-negotiable. Log Plate Checks after training. The scale will bounce—focus on the trend and the mirror.",
+    accentColor: '#22c55e',
+  },
+  maintenance: {
+    id: 'first-week',
+    icon: '⚖️',
+    title: "Your First Week",
+    body: "You've got this. Keep logging to stay mindful. The trend will tell you if anything's drifting. Consistency is the goal.",
+    accentColor: '#3b82f6',
+  },
+};
+
 export default function BlueprintView({ formData, onBack }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPhilosophyModal, setShowPhilosophyModal] = useState(false);
   
   const buttonScale = useSharedValue(1);
   const rainbowPhase = useSharedValue(0);
+
+  // Build philosophy slides with goal-specific final slide
+  const philosophySlides: TapthroughSlide[] = useMemo(() => [
+    {
+      id: 'not-counting',
+      icon: '🧠',
+      title: "You're Not Counting Forever",
+      body: "Simplifit teaches you intuitive eating through biology—not eternal spreadsheets. After a few weeks, you'll know what 'enough protein' feels like.",
+    },
+    {
+      id: 'behaviors',
+      icon: '✓',
+      title: "Log Behaviors, Not Macros",
+      body: "Plate Checks ask simple questions: Protein? Plants? Satisfied? No food databases. No weighing chicken. Just awareness.",
+    },
+    {
+      id: 'trend',
+      icon: '📈',
+      title: "Trust the Trend",
+      body: "Your daily weight lies—water, salt, and timing cause 2-5 lb swings. We track your 7-day average. That's the truth.",
+    },
+    GOAL_SLIDES[formData.goal],
+  ], [formData.goal]);
 
   // Animate rainbow effect
   useEffect(() => {
@@ -89,7 +140,14 @@ export default function BlueprintView({ formData, onBack }: Props) {
   
   const macros = calculateMacros(macroInput);
 
-  const handleComplete = async () => {
+  // Show philosophy modal when Continue is pressed
+  const handleContinue = () => {
+    setShowPhilosophyModal(true);
+  };
+
+  // Called when philosophy modal completes - save and navigate
+  const handlePhilosophyComplete = async () => {
+    setShowPhilosophyModal(false);
     setIsLoading(true);
     setError(null);
 
@@ -130,6 +188,7 @@ export default function BlueprintView({ formData, onBack }: Props) {
       }
 
       // 3. Navigate to home
+      hapticSuccess();
       router.replace('/(tabs)/home');
     } catch (err) {
       console.error('Onboarding completion error:', err);
@@ -231,8 +290,11 @@ export default function BlueprintView({ formData, onBack }: Props) {
           </Pressable>
 
           <AnimatedPressable
-            onPress={handleComplete}
-            onPressIn={() => { buttonScale.value = withSpring(0.95); }}
+            onPress={handleContinue}
+            onPressIn={() => { 
+              hapticLight();
+              buttonScale.value = withSpring(0.95); 
+            }}
             onPressOut={() => { buttonScale.value = withSpring(1); }}
             style={[styles.nextButton, buttonStyle]}
             disabled={isLoading}
@@ -240,11 +302,19 @@ export default function BlueprintView({ formData, onBack }: Props) {
             {isLoading ? (
               <ActivityIndicator color="white" size="small" />
             ) : (
-              <Text style={styles.nextButtonText}>Start My Journey</Text>
+              <Text style={styles.nextButtonText}>Continue</Text>
             )}
           </AnimatedPressable>
         </View>
       </ScrollView>
+
+      {/* Philosophy Modal */}
+      <TapthroughModal
+        visible={showPhilosophyModal}
+        slides={philosophySlides}
+        onComplete={handlePhilosophyComplete}
+        finalButtonText="Let's Begin"
+      />
     </Animated.View>
   );
 }

@@ -1,106 +1,196 @@
 /**
- * Home Screen - Main Dashboard
+ * Home Screen - "The Daily Pulse"
  * 
- * Displays daily progress, targets, and quick actions.
- * This is where users land after completing onboarding.
+ * Main dashboard displaying time-aware content feed with:
+ * - Glassmorphism header with greeting
+ * - Educational content (LessonCard) - Daily Golden Rule
+ * - Meal behavior logging (NourishmentCard with Plate Check)
+ * - Daily rituals (RitualsCard)
+ * 
+ * Card order changes based on time of day for contextual relevance.
+ * 
+ * @updated SIM-006: Replaced calorie logging with Plate Check behavior tracking
+ * 
+ * Data Sources:
+ * - User profile/targets from Firestore via useUser hook
+ * - Behavior tracking via useDailyLog hook
+ * - Golden Rules from content service
  */
 
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+
+import HomeHeader from '../../components/home/HomeHeader';
+import DailyPulseFeed from '../../components/home/DailyPulseFeed';
+import HomeSkeleton from '../../components/home/HomeSkeleton';
+import PlateCheckModal from '../../components/modals/PlateCheckModal';
+import useUser from '../../hooks/useUser';
+import useDailyLog from '../../hooks/useDailyLog';
+import useWeight from '../../hooks/useWeight';
+import { getDailyRule, GoldenRule } from '../../services/content';
+import { MealType } from '../../types/schema';
+
+// Design system colors
+const COLORS = {
+  background: '#F8F6F2',
+  gradientStart: '#f3e7e9',
+  gradientMid: '#e3eeff',
+  gradientEnd: '#e8f3e8',
+};
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  
+  // Fetch user data from Firestore
+  const { profile, stats, targets, loading, error } = useUser();
+  
+  // Fetch today's daily log (real-time subscription) - SIM-006: Now behavior-based
+  const { stats: dayStats, logPlateCheck, isLoading: dailyLogLoading } = useDailyLog();
+  
+  // Fetch weight data and trend (SIM-005: The Truth Layer)
+  const { 
+    currentWeight, 
+    trendWeight, 
+    previousTrend,
+    hasLoggedToday: hasLoggedWeightToday, 
+    logWeight, 
+    isLoading: weightLoading 
+  } = useWeight();
+  
+  // Get today's Golden Rule
+  const [dailyRule, setDailyRule] = useState<GoldenRule | null>(null);
+  
+  // Plate Check modal state (SIM-006)
+  const [isPlateCheckModalVisible, setIsPlateCheckModalVisible] = useState(false);
+  
+  useEffect(() => {
+    // Fetch daily rule on mount
+    const rule = getDailyRule();
+    setDailyRule(rule);
+  }, []);
+  
+  // Rituals state (still mocked - future ticket)
+  const [hydrationLiters, setHydrationLiters] = useState(0);
+  const [movementMins, setMovementMins] = useState(0);
 
-  // TODO: Fetch actual user data from Firebase
-  const mockData = {
-    name: 'User',
-    calories: { current: 0, target: 1800 },
-    protein: { current: 0, target: 140 },
-  };
+  // Derived values from real user data
+  const userName = profile?.displayName ?? 'Guest';
+  
+  // Weight-related derived values
+  const units = profile?.units ?? 'metric';
+  const startWeight = stats?.startWeightKg ?? 70;
+  const goalWeight = stats?.goalWeightKg ?? 65;
+
+  // Plate Check Modal handlers (SIM-006)
+  const handleOpenPlateCheck = useCallback(() => {
+    setIsPlateCheckModalVisible(true);
+  }, []);
+
+  const handleClosePlateCheck = useCallback(() => {
+    setIsPlateCheckModalVisible(false);
+  }, []);
+
+  const handleSubmitPlateCheck = useCallback(async (
+    mealType: MealType,
+    data: { protein: boolean; plants: boolean; satiety: number }
+  ) => {
+    await logPlateCheck(mealType, data);
+    // Modal will close automatically after successful submission
+  }, [logPlateCheck]);
+
+  // Rituals handlers
+  const handleRitualPress = useCallback((ritualId: string) => {
+    // Mock: Increment ritual
+    if (ritualId === 'hydration') {
+      setHydrationLiters((prev) => Math.min(prev + 1, 3));
+    } else if (ritualId === 'movement') {
+      setMovementMins((prev) => Math.min(prev + 10, 30));
+    }
+  }, []);
+
+  const handleRitualInfoPress = useCallback((ritualId: string) => {
+    // TODO: Show "Why" modal (future ticket)
+    console.log(`Showing info for: ${ritualId}`);
+  }, []);
+
+  // Header height for scroll offset
+  const headerHeight = insets.top + 80;
+
+  // Show skeleton while loading user data, daily log, or weight data
+  if (loading || dailyLogLoading || weightLoading) {
+    return (
+      <View style={styles.container}>
+        <LinearGradient
+          colors={[COLORS.gradientStart, COLORS.gradientMid, COLORS.gradientEnd]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.backgroundGradient}
+        />
+        <HomeSkeleton />
+      </View>
+    );
+  }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
+    <View style={styles.container}>
+      {/* Animated gradient background */}
+      <LinearGradient
+        colors={[COLORS.gradientStart, COLORS.gradientMid, COLORS.gradientEnd]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.backgroundGradient}
+      />
+      
+      {/* Fixed header - uses real user name */}
+      <HomeHeader 
+        userName={userName} 
+        streakDays={7} // TODO: Calculate from daily_logs in future ticket
+      />
+
+      {/* Scrollable content */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { 
+            paddingTop: headerHeight + 24,
+            paddingBottom: insets.bottom + 100, // Space for tab bar
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <Animated.View entering={FadeIn.duration(600)} style={styles.header}>
-          <Text style={styles.greeting}>Good morning,</Text>
-          <Text style={styles.name}>{mockData.name}</Text>
-        </Animated.View>
-
-        {/* Daily Progress Card */}
-        <Animated.View entering={FadeInUp.duration(600).delay(200)} style={styles.progressCard}>
-          <Text style={styles.cardTitle}>Today's Progress</Text>
-          
-          {/* Calories */}
-          <View style={styles.progressRow}>
-            <View style={styles.progressInfo}>
-              <Text style={styles.progressLabel}>Calories</Text>
-              <Text style={styles.progressValue}>
-                {mockData.calories.current} / {mockData.calories.target}
-              </Text>
-            </View>
-            <View style={styles.progressBar}>
-              <View 
-                style={[
-                  styles.progressFill, 
-                  { width: `${(mockData.calories.current / mockData.calories.target) * 100}%` }
-                ]} 
-              />
-            </View>
-          </View>
-
-          {/* Protein */}
-          <View style={styles.progressRow}>
-            <View style={styles.progressInfo}>
-              <Text style={styles.progressLabel}>Protein</Text>
-              <Text style={styles.progressValue}>
-                {mockData.protein.current}g / {mockData.protein.target}g
-              </Text>
-            </View>
-            <View style={styles.progressBar}>
-              <View 
-                style={[
-                  styles.progressFill,
-                  styles.progressFillProtein,
-                  { width: `${(mockData.protein.current / mockData.protein.target) * 100}%` }
-                ]} 
-              />
-            </View>
-          </View>
-        </Animated.View>
-
-        {/* Quick Actions */}
-        <Animated.View entering={FadeInUp.duration(600).delay(400)} style={styles.actionsContainer}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionButtons}>
-            <View style={styles.actionButton}>
-              <Text style={styles.actionIcon}>📷</Text>
-              <Text style={styles.actionLabel}>Snap Meal</Text>
-            </View>
-            <View style={styles.actionButton}>
-              <Text style={styles.actionIcon}>✏️</Text>
-              <Text style={styles.actionLabel}>Manual Log</Text>
-            </View>
-            <View style={styles.actionButton}>
-              <Text style={styles.actionIcon}>⚖️</Text>
-              <Text style={styles.actionLabel}>Weigh In</Text>
-            </View>
-          </View>
-        </Animated.View>
-
-        {/* Welcome Message for New Users */}
-        <Animated.View entering={FadeInUp.duration(600).delay(600)} style={styles.welcomeCard}>
-          <Text style={styles.welcomeIcon}>🎉</Text>
-          <Text style={styles.welcomeTitle}>Welcome to Simplifit!</Text>
-          <Text style={styles.welcomeText}>
-            Your personalized plan is ready. Start by logging your first meal to see the magic happen.
-          </Text>
-        </Animated.View>
+        <DailyPulseFeed
+          // Nourishment (SIM-006: Behavior-based)
+          stats={dayStats}
+          onCheckIn={handleOpenPlateCheck}
+          // Weight
+          currentWeight={currentWeight}
+          trendWeight={trendWeight}
+          previousTrend={previousTrend}
+          hasLoggedWeightToday={hasLoggedWeightToday}
+          units={units}
+          startWeight={startWeight}
+          goalWeight={goalWeight}
+          onLogWeight={logWeight}
+          // Rituals
+          hydrationLiters={hydrationLiters}
+          movementMins={movementMins}
+          onRitualPress={handleRitualPress}
+          onRitualInfoPress={handleRitualInfoPress}
+          // Content
+          dailyRule={dailyRule}
+        />
       </ScrollView>
+      
+      {/* Plate Check Modal (SIM-006) */}
+      <PlateCheckModal
+        visible={isPlateCheckModalVisible}
+        onClose={handleClosePlateCheck}
+        onSubmit={handleSubmitPlateCheck}
+        alreadyLoggedMeals={dayStats.mealsLogged}
+      />
     </View>
   );
 }
@@ -108,134 +198,15 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F6F2',
+    backgroundColor: COLORS.background,
+  },
+  backgroundGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  scrollView: {
+    flex: 1,
   },
   scrollContent: {
-    padding: 24,
-    paddingBottom: 40,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  greeting: {
-    fontFamily: 'Manrope_400Regular',
-    fontSize: 16,
-    color: '#78716c',
-  },
-  name: {
-    fontFamily: 'PlayfairDisplay_600SemiBold',
-    fontSize: 32,
-    color: '#1c1917',
-  },
-  progressCard: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  cardTitle: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 14,
-    color: '#78716c',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 20,
-  },
-  progressRow: {
-    marginBottom: 16,
-  },
-  progressInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  progressLabel: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 14,
-    color: '#1c1917',
-  },
-  progressValue: {
-    fontFamily: 'Manrope_400Regular',
-    fontSize: 14,
-    color: '#78716c',
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: '#f5f5f4',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#f97316',
-    borderRadius: 4,
-  },
-  progressFillProtein: {
-    backgroundColor: '#22c55e',
-  },
-  actionsContainer: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 14,
-    color: '#78716c',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 16,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  actionIcon: {
-    fontSize: 28,
-    marginBottom: 8,
-  },
-  actionLabel: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 12,
-    color: '#1c1917',
-  },
-  welcomeCard: {
-    backgroundColor: '#ecfdf5',
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-  },
-  welcomeIcon: {
-    fontSize: 32,
-    marginBottom: 12,
-  },
-  welcomeTitle: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 18,
-    color: '#065f46',
-    marginBottom: 8,
-  },
-  welcomeText: {
-    fontFamily: 'Manrope_400Regular',
-    fontSize: 14,
-    color: '#047857',
-    textAlign: 'center',
-    lineHeight: 20,
+    paddingHorizontal: 16,
   },
 });
-

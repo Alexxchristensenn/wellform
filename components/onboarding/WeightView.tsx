@@ -6,6 +6,7 @@
  */
 
 import { View, Text, Pressable, StyleSheet, TextInput, ScrollView } from 'react-native';
+import { hapticLight, hapticSelection } from '../../utils/haptics';
 import Animated, {
   FadeIn,
   useAnimatedStyle,
@@ -64,6 +65,7 @@ export default function WeightView({ weight, units, onWeightChange, onNext, onBa
   const currentDisplay = units === 'imperial' ? kgToLbs(weight) : weight;
 
   const handleSliderChange = (value: number) => {
+    hapticSelection();
     const weightKg = units === 'imperial' ? lbsToKg(value) : value;
     onWeightChange(weightKg);
   };
@@ -147,7 +149,10 @@ export default function WeightView({ weight, units, onWeightChange, onNext, onBa
 
           <AnimatedPressable
             onPress={onNext}
-            onPressIn={() => { buttonScale.value = withSpring(0.95); }}
+            onPressIn={() => { 
+              hapticLight();
+              buttonScale.value = withSpring(0.95); 
+            }}
             onPressOut={() => { buttonScale.value = withSpring(1); }}
             style={[styles.nextButton, buttonStyle]}
           >
@@ -259,7 +264,8 @@ const styles = StyleSheet.create({
   },
   sliderContainer: {
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 300,
+    alignSelf: 'center',
     marginBottom: 24,
   },
   slider: {

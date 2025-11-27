@@ -5,6 +5,7 @@
  */
 
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { hapticLight } from '../../utils/haptics';
 import Animated, {
   FadeIn,
   useAnimatedStyle,
@@ -65,7 +66,10 @@ export default function NameView({ name, onNameChange, onNext }: Props) {
         <View style={styles.navRow}>
           <AnimatedPressable
             onPress={handleSubmit}
-            onPressIn={() => { buttonScale.value = withSpring(0.95); }}
+            onPressIn={() => { 
+              hapticLight();
+              buttonScale.value = withSpring(0.95); 
+            }}
             onPressOut={() => { buttonScale.value = withSpring(1); }}
             style={[styles.button, !isValid && styles.buttonDisabled, buttonStyle]}
             disabled={!isValid}

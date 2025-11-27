@@ -4,6 +4,8 @@
  * Handles authentication and Firestore database operations.
  * Uses LAZY initialization to prevent crashes when env vars are missing.
  * All operations are wrapped in try-catch for graceful error handling.
+ * 
+ * @updated SIM-006: Added logPlateCheckToFirestore for behavior-based tracking
  */
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -19,7 +21,7 @@ import {
   getDoc,
   Firestore,
 } from 'firebase/firestore';
-import { UserProfile } from '../types/schema';
+import { UserProfile, MealType, PlateCheckMeal, DayLog, WeightLog } from '../types/schema';
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -89,6 +91,17 @@ function getFirestoreInstance(): Firestore | null {
 }
 
 /**
+ * Get today's date in YYYY-MM-DD format
+ */
+function getTodayDateString(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * Sign in anonymously
  * Creates a temporary account that can be upgraded later
  * Returns null if Firebase is not configured (allows testing without backend)
@@ -125,7 +138,6 @@ export async function saveUserProfile(
   
   if (!db) {
     console.warn('Firestore not available. Profile not saved to cloud.');
-    // TODO: Consider saving to AsyncStorage for offline support
     return true; // Return true to allow navigation to continue
   }
 
@@ -175,5 +187,133 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
   } catch (error) {
     console.error('Failed to get user profile:', error);
     return null;
+  }
+}
+
+// ============================================================================
+// PLATE CHECK (SIM-006: Behavior-Based Meal Logging)
+// ============================================================================
+
+/**
+ * Log a Plate Check to Firestore
+ * Path: users/{uid}/days/{YYYY-MM-DD}
+ * 
+ * Uses setDoc with merge to add/update individual meal entries
+ * without overwriting other meals or daily data.
+ * 
+ * @param uid - User's auth UID
+ * @param mealType - breakfast | lunch | dinner | snack
+ * @param plateCheck - { protein: boolean, plants: boolean, satiety: 1-5 }
+ * 
+ * @see SIM-006 for implementation details
+ */
+export async function logPlateCheckToFirestore(
+  uid: string,
+  mealType: MealType,
+  plateCheck: Omit<PlateCheckMeal, 'timestamp'>
+): Promise<boolean> {
+  const db = getFirestoreInstance();
+  
+  if (!db) {
+    console.warn('Firestore not available. Plate check not saved to cloud.');
+    return false;
+  }
+
+  try {
+    const today = getTodayDateString();
+    const dayRef = doc(db, 'users', uid, 'days', today);
+    
+    // Build the meal entry with timestamp
+    const mealEntry: PlateCheckMeal = {
+      protein: plateCheck.protein,
+      plants: plateCheck.plants,
+      satiety: plateCheck.satiety,
+      timestamp: Date.now(),
+    };
+
+    // Use setDoc with merge to update only this meal
+    // This preserves other meals and daily data
+    await setDoc(dayRef, {
+      date: today,
+      meals: {
+        [mealType]: mealEntry,
+      },
+    }, { merge: true });
+
+    return true;
+  } catch (error) {
+    console.error('Failed to log plate check:', error);
+    return false;
+  }
+}
+
+/**
+ * Get today's day log from Firestore
+ * Path: users/{uid}/days/{YYYY-MM-DD}
+ */
+export async function getDayLog(uid: string): Promise<DayLog | null> {
+  const db = getFirestoreInstance();
+  
+  if (!db) {
+    console.warn('Firestore not available.');
+    return null;
+  }
+
+  try {
+    const today = getTodayDateString();
+    const dayRef = doc(db, 'users', uid, 'days', today);
+    const snapshot = await getDoc(dayRef);
+    
+    if (snapshot.exists()) {
+      return snapshot.data() as DayLog;
+    }
+    return null;
+  } catch (error) {
+    console.error('Failed to get day log:', error);
+    return null;
+  }
+}
+
+// ============================================================================
+// WEIGHT TRACKING (SIM-005: The Truth Layer)
+// ============================================================================
+
+/**
+ * Log weight to Firestore
+ * Path: users/{uid}/weight_logs/{YYYY-MM-DD}
+ * 
+ * Creates or overwrites the weight entry for today.
+ * Weight is stored in kilograms regardless of user's display preference.
+ * 
+ * @see SIM-005 for implementation details
+ */
+export async function logWeightToFirestore(
+  uid: string,
+  weightKg: number
+): Promise<boolean> {
+  const db = getFirestoreInstance();
+  
+  if (!db) {
+    console.warn('Firestore not available. Weight not saved to cloud.');
+    return false;
+  }
+
+  try {
+    const today = getTodayDateString();
+    const weightRef = doc(db, 'users', uid, 'weight_logs', today);
+    
+    const weightLog: WeightLog = {
+      date: today,
+      weight: weightKg,
+      timestamp: Date.now(),
+    };
+
+    // Use setDoc to create or overwrite today's entry
+    await setDoc(weightRef, weightLog);
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to log weight:', error);
+    return false;
   }
 }

@@ -13,6 +13,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import {
   useFonts,
   PlayfairDisplay_400Regular,
+  PlayfairDisplay_400Regular_Italic,
   PlayfairDisplay_600SemiBold,
   PlayfairDisplay_700Bold,
   PlayfairDisplay_900Black,
@@ -35,6 +36,7 @@ const queryClient = new QueryClient();
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     PlayfairDisplay_400Regular,
+    PlayfairDisplay_400Regular_Italic,
     PlayfairDisplay_600SemiBold,
     PlayfairDisplay_700Bold,
     PlayfairDisplay_900Black,

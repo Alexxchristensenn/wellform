@@ -11,6 +11,7 @@
 
 import { useEffect, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native';
+import { hapticLight } from '../../utils/haptics';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -233,29 +234,35 @@ export default function WelcomeView({ slide, onSlideChange, onFinish }: Props) {
           <Text style={styles.title}>{current.title}</Text>
           <Text style={styles.subtitle}>{current.subtitle}</Text>
         </View>
+      </Animated.View>
+
+      {/* Fixed Bottom Section */}
+      <Animated.View style={[styles.bottomSection, !introFinished && contentStyle]}>
+        {/* Dots */}
+        <View style={styles.dotsContainer}>
+          {[0, 1, 2].map((i) => (
+            <Animated.View
+              key={i}
+              style={[
+                styles.dot,
+                i === slide && styles.dotActive,
+              ]}
+            />
+          ))}
+        </View>
 
         {/* Button */}
         <AnimatedPressable
           onPress={handlePress}
-          onPressIn={() => { buttonScale.value = withSpring(0.95); }}
+          onPressIn={() => { 
+            hapticLight();
+            buttonScale.value = withSpring(0.95); 
+          }}
           onPressOut={() => { buttonScale.value = withSpring(1); }}
           style={[styles.button, buttonStyle]}
         >
           <Text style={styles.buttonText}>{slide < 2 ? 'Continue' : 'Start'}</Text>
         </AnimatedPressable>
-      </Animated.View>
-
-      {/* Dots */}
-      <Animated.View style={[styles.dotsContainer, !introFinished && contentStyle]}>
-        {[0, 1, 2].map((i) => (
-          <Animated.View
-            key={i}
-            style={[
-              styles.dot,
-              i === slide && styles.dotActive,
-            ]}
-          />
-        ))}
       </Animated.View>
     </View>
   );
@@ -378,6 +385,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
+  bottomSection: {
+    marginTop: 'auto',
+    alignItems: 'center',
+    paddingBottom: 16,
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
   button: {
     backgroundColor: '#1c1917',
     paddingHorizontal: 40,
@@ -388,7 +405,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
-    marginTop: 16,
   },
   buttonText: {
     fontFamily: 'Manrope_600SemiBold',
@@ -396,11 +412,6 @@ const styles = StyleSheet.create({
     color: 'white',
     textTransform: 'uppercase',
     letterSpacing: 2,
-  },
-  dotsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 48,
   },
   dot: {
     width: 8,

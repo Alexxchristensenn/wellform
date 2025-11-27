@@ -6,6 +6,7 @@
  */
 
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { hapticLight } from '../../utils/haptics';
 import Animated, {
   FadeIn,
   FadeInUp,
@@ -123,7 +124,10 @@ export default function EducationScaleView({ onNext, onBack }: Props) {
 
           <AnimatedPressable
             onPress={onNext}
-            onPressIn={() => { buttonScale.value = withSpring(0.95); }}
+            onPressIn={() => { 
+              hapticLight();
+              buttonScale.value = withSpring(0.95); 
+            }}
             onPressOut={() => { buttonScale.value = withSpring(1); }}
             style={[styles.nextButton, buttonStyle]}
           >
@@ -142,7 +146,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     alignItems: 'center',
-    paddingTop: 16,
+    paddingTop: 12,
   },
   header: {
     alignItems: 'center',
@@ -170,13 +174,13 @@ const styles = StyleSheet.create({
   },
   scaleContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   scaleEmoji: {
     marginBottom: 12,
   },
   scaleIcon: {
-    fontSize: 40,
+    fontSize: 32,
   },
   fluctuationBars: {
     width: '100%',
@@ -211,7 +215,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: 'white',
     borderRadius: 12,
-    padding: 14,
+    padding: 12,
     gap: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -240,9 +244,9 @@ const styles = StyleSheet.create({
   insightBox: {
     backgroundColor: '#1c1917',
     borderRadius: 12,
-    padding: 14,
+    padding: 12,
     maxWidth: 400,
-    marginBottom: 20,
+    marginBottom: 14,
   },
   insightText: {
     fontFamily: 'Manrope_400Regular',
