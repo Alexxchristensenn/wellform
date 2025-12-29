@@ -56,7 +56,7 @@ You are a Senior React Native Architect building "Simplifit".
 
 # 🛠 TECH STACK
 
-- **Mobile:** Expo (latest), TypeScript, NativeWind (Tailwind).
+- **Mobile:** Expo (~54), TypeScript, StyleSheet (standard React Native styling).
 - **Animation:** React Native Reanimated (Strict requirement: No CSS Keyframes).
 - **AI:** OpenAI (gpt-4o-mini) via `services/ai.ts` (JSON Mode required).
 - **Data:** Firebase Firestore (Offline First), TanStack Query (Caching).
@@ -103,7 +103,7 @@ You are a Senior React Native Architect building "Simplifit".
 **Small Files:** If a component exceeds 300 lines, propose a refactor immediately.
 
 **Styling Standards:**
-- Use NativeWind classes (`bg-stone-900`).
+- Use React Native `StyleSheet.create()` for all styles.
 - Use Reanimated `useAnimatedStyle` for animations.
 
 **No "Stubbing":** Do not write `// TODO: Implement later`. Implement the logic or explicitly state why it is skipped.

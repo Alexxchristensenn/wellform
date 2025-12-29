@@ -184,9 +184,11 @@ This smooths daily fluctuations (water, sodium, digestion) to show the user's **
 
 ---
 
-### Collection: `users/{uid}/journey/progress` (Single Document)
+### Document: `users/{uid}/journey/progress` (Single Document)
 
 *Tracks curriculum progress through the Golden Rules. Created after onboarding.*
+
+**Firestore Path:** `users/{uid}/journey/progress`
 
 ```json
 {
@@ -269,8 +271,12 @@ Analyze this meal photo. Return JSON:
 
 ---
 
-## 5. Animation Standards
+## 5. Styling & Animation Standards
 
+### Styling
+All components use React Native's built-in `StyleSheet.create()`. We do **not** use NativeWind, Tailwind, or CSS-in-JS libraries.
+
+### Animation
 - **Holographic Effect:** Use `react-native-reanimated` with `interpolateColor` for hue rotation. CSS Keyframes do not work in React Native.
 - **Gesture Handling:** Use `react-native-gesture-handler` for sliders to avoid conflicts with iOS system gestures.
 - **Micro-interactions:** Haptic feedback on behavior toggles (success = light tap, completion = medium tap).

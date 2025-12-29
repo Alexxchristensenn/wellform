@@ -22,7 +22,7 @@ Project Foundation
 
 âœ…
 
-NativeWind, Reanimated, Firebase, OpenAI Setup
+StyleSheet, Reanimated, Firebase, OpenAI Setup
 
 F-02
 

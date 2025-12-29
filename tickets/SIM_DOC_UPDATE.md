@@ -20,4 +20,4 @@ Refactor the project documentation (`.cursorrules` and `docs/architecture.md`) t
 *Replace the "Role & Vision" and "Core Philosophy" sections with the new Persona guidelines above.*
 
 ### 2. `docs/architecture.md` (The PRD)
-*Rewrite Section 1 (Core User Journey) and Section 2 (Data Schema) to remove "Calorie Logging" and insert "The Plate Check" and "Weight Trend."*
+*Rewrite Section 1 (Core User Journey) and Section 2 (Data Schema) to remove "Calorie Logging" and insert "The Plate Check" and "Weight Trend."*        
