@@ -14,10 +14,14 @@
  * 10. Myth - Myth buster quiz
  * 11. Timeline - Calculate arrival date
  * 12. Blueprint - Final plan with Firebase save
+ * 
+ * @updated SIM-018: Scorched Earth Policy - Signs out existing user on mount
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
+import { signOut } from '../../services/firebase';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
@@ -86,6 +90,7 @@ interface FormData {
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
   const [stepIndex, setStepIndex] = useState(0);
   const [introSlide, setIntroSlide] = useState(0);
   const [formData, setFormData] = useState<FormData>({
@@ -99,6 +104,31 @@ export default function OnboardingScreen() {
     activity: 1.2,      // Sedentary default (critical for accurate TDEE)
     goal: 'weight_loss',
   });
+
+  // ============================================================================
+  // SIM-018: SCORCHED EARTH POLICY
+  // When onboarding mounts, destroy any existing session to ensure a fresh start.
+  // This prevents "Sticky Sessions" where old data leaks into new journeys.
+  // ============================================================================
+  useEffect(() => {
+    const purgeSession = async () => {
+      try {
+        // Sign out any existing user (works offline - clears local state)
+        await signOut();
+        
+        // Clear all cached data from React Query
+        // This ensures no stale user data persists from a previous session
+        queryClient.clear();
+        
+        console.log('[Onboarding] Session purged. Ready for fresh start.');
+      } catch (error) {
+        console.error('[Onboarding] Session purge failed:', error);
+        // Continue anyway - the flow should still work
+      }
+    };
+
+    purgeSession();
+  }, [queryClient]);
 
   const currentStep = STEPS[stepIndex];
   const next = () => stepIndex < STEPS.length - 1 && setStepIndex(stepIndex + 1);

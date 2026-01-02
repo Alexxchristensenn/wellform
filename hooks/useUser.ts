@@ -18,9 +18,9 @@ import {
   getFirestore,
   getDoc,
 } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { UserProfile } from '../types/schema';
-import { isFirebaseConfigured } from '../services/firebase';
+import { isFirebaseConfigured, getAuthInstance } from '../services/firebase';
 
 // Default guest profile for offline/unauthenticated users
 const GUEST_PROFILE: UserProfile = {
@@ -106,7 +106,16 @@ export default function useUser(): UseUserReturn {
 
     let unsubscribeSnapshot: Unsubscribe | null = null;
     
-    const auth = getAuth();
+    // Use lazy-initialized auth instance
+    const auth = getAuthInstance();
+    
+    // If auth instance is not available, fallback to guest
+    if (!auth) {
+      console.warn('Auth instance not available. Using guest profile.');
+      setUser(GUEST_PROFILE);
+      setLoading(false);
+      return;
+    }
     
     // Listen for auth state changes
     const unsubscribeAuth = onAuthStateChanged(auth, async (authUser: User | null) => {

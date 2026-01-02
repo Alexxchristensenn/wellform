@@ -181,7 +181,7 @@ export default function WelcomeView({ slide, onSlideChange, onFinish }: Props) {
       
       {/* --- INTRO ANIMATION LAYER --- */}
       {!introFinished && (
-        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
           {/* Centered Container for Orbit */}
           <View style={styles.centerContainer}>
             {/* Orbiting Container */}

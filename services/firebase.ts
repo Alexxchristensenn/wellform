@@ -12,6 +12,7 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { 
   getAuth, 
   signInAnonymously as firebaseSignInAnonymously,
+  signOut as firebaseSignOut,
   Auth
 } from 'firebase/auth';
 import { 
@@ -68,8 +69,9 @@ function getFirebaseApp(): FirebaseApp | null {
 
 /**
  * Get Auth instance (lazy initialization)
+ * Exported for use in hooks that need auth state changes
  */
-function getAuthInstance(): Auth | null {
+export function getAuthInstance(): Auth | null {
   const app = getFirebaseApp();
   if (!app) return null;
   
@@ -124,6 +126,32 @@ export async function signInAnonymously(): Promise<string | null> {
     console.error('Anonymous sign-in failed:', error);
     // Return mock UID as fallback
     return `mock_${Date.now()}`;
+  }
+}
+
+/**
+ * Sign out the current user
+ * Clears local auth state even if offline (graceful degradation)
+ * 
+ * @returns true if sign out succeeded, false if failed
+ * @see SIM-018: Identity Cycle
+ */
+export async function signOut(): Promise<boolean> {
+  const auth = getAuthInstance();
+  
+  if (!auth) {
+    console.warn('Firebase Auth not available. Local state cleared.');
+    return true; // Consider it a success - no session to clear
+  }
+
+  try {
+    await firebaseSignOut(auth);
+    return true;
+  } catch (error) {
+    console.error('Sign out failed:', error);
+    // Even if Firebase call fails, the local state should be cleared
+    // Firebase SDK handles offline sign-out gracefully
+    return false;
   }
 }
 
