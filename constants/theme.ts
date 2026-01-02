@@ -342,21 +342,21 @@ export const SHADOWS = {
     shadowRadius: 25,
     elevation: 12,
   },
-  // Holographic glow
+  // Holographic glow - subtle, not overwhelming
   holographic: {
-    shadowColor: 'rgba(100, 200, 255, 0.4)',
-    shadowOffset: { width: 0, height: 10 },
+    shadowColor: 'rgba(100, 200, 255, 0.15)',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
-    shadowRadius: 25,
-    elevation: 8,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  // Button press shadow (softer stone color)
+  // Button shadow - very subtle
   button: {
-    shadowColor: STONE[200],
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
 } as const;
 

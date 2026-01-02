@@ -18,8 +18,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BookOpen, ChevronDown } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { STONE, COLORS, FONTS, TYPE, SPACING, RADII, SHADOWS } from '../../constants/theme';
+import { STONE, COLORS, FONTS, TYPE, SPACING, RADII } from '../../constants/theme';
 import { DURATION, EASING, SPRING, ANIMATION } from '../../constants/motion';
+import { SHADOW } from '../../utils/shadows';
 
 // Orange accent colors for lessons (not in main theme as it's lesson-specific)
 const LESSON_ACCENT = {
@@ -158,7 +159,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.glassBorder,
     borderLeftWidth: 4,
     borderLeftColor: LESSON_ACCENT.border,
-    ...SHADOWS.sm,
+    ...SHADOW.sm,
     overflow: 'hidden',
   },
   accentBorder: {

@@ -7,16 +7,19 @@
  * - Evening (7PM+): Rituals → Scale → Nourishment → Lesson
  * 
  * @updated SIM-006: NourishmentCard now receives behavior stats instead of calories
+ * @updated SIM-017: Added WeeklyInsightCard at the top of the feed
  */
 
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import useTimeOfDay, { TimeOfDay } from '../../hooks/useTimeOfDay';
+import useWeeklyReview from '../../hooks/useWeeklyReview';
 import LessonCard from '../cards/LessonCard';
 import NourishmentCard from '../cards/NourishmentCard';
 import RitualsCard from '../cards/RitualsCard';
 import ScaleCard from '../cards/ScaleCard';
+import WeeklyInsightCard from '../cards/WeeklyInsightCard';
 import { GoldenRule } from '../../services/content';
 import { DayStats } from '../../types/schema';
 import { SPACING } from '../../constants/theme';
@@ -78,6 +81,9 @@ export default function DailyPulseFeed({
 }: DailyPulseFeedProps) {
   const { timeOfDay } = useTimeOfDay();
   const cardOrder = CARD_ORDER[timeOfDay];
+
+  // SIM-017: Weekly Review data for the Insight Engine
+  const weeklyReview = useWeeklyReview();
 
   // Prepare rituals data
   const rituals = [
@@ -164,8 +170,28 @@ export default function DailyPulseFeed({
     }
   };
 
+  // SIM-017: Only show WeeklyInsightCard if we have actual data
+  // Requires at least 1 day of behavior data OR 2+ weight logs
+  const shouldShowInsightCard = !weeklyReview.loading && 
+    !weeklyReview.error &&
+    (weeklyReview.stats.totalDays >= 1 || weeklyReview.history.length >= 2);
+
   return (
     <Animated.View entering={FadeIn.duration(DURATION.slow + 50)} style={styles.container}>
+      {/* SIM-017: Weekly Insight Card - Only shows when we have real data */}
+      {shouldShowInsightCard && (
+        <View style={styles.cardWrapper}>
+          <WeeklyInsightCard
+            stats={weeklyReview.stats}
+            trend={weeklyReview.trend}
+            history={weeklyReview.history}
+            insight={weeklyReview.insight}
+            hasEnoughData={weeklyReview.hasEnoughData}
+            units={units}
+          />
+        </View>
+      )}
+      
       {cardOrder.map((cardType, index) => renderCard(cardType, index))}
     </Animated.View>
   );

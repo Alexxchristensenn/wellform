@@ -33,7 +33,7 @@ interface HomeHeaderProps {
 
 const TimeIcon = ({ icon }: { icon: 'sunrise' | 'sun' | 'moon' }) => {
   const iconProps = {
-    size: 24,
+    size: 20,
     color: COLORS.stone500,
     strokeWidth: 1.5,
   };
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   },
   blurContainer: {
     marginHorizontal: 16,
-    borderRadius: 28,
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -104,37 +104,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     backgroundColor: COLORS.whiteTranslucent,
   },
   leftSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 10,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   textContainer: {
-    gap: 2,
+    gap: 1,
   },
   pulseLabel: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 10,
-    letterSpacing: 2,
-    color: COLORS.stone500,
+    fontFamily: 'Manrope_600SemiBold',
+    fontSize: 9,
+    letterSpacing: 1,
+    color: COLORS.stone400,
     textTransform: 'uppercase',
   },
   greeting: {
     fontFamily: 'PlayfairDisplay_400Regular',
-    fontSize: 22,
+    fontSize: 18,
     color: COLORS.stone900,
+    lineHeight: 22,
   },
   name: {
     fontFamily: 'PlayfairDisplay_600SemiBold',
@@ -142,15 +143,15 @@ const styles = StyleSheet.create({
   streakContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     backgroundColor: 'rgba(249, 115, 22, 0.1)',
-    borderRadius: 20,
+    borderRadius: 14,
   },
   streakText: {
     fontFamily: 'Manrope_700Bold',
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.flame,
   },
 });

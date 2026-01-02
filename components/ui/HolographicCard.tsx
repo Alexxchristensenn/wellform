@@ -38,6 +38,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { HOLOGRAPHIC, COLORS, SHADOWS, RADII } from '../../constants/theme';
 import { DURATION, TIMING, ANIMATION, EASING } from '../../constants/motion';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { createShadow } from '../../utils/shadows';
 
 interface HolographicCardProps {
   children: React.ReactNode;
@@ -294,16 +295,23 @@ export default function HolographicCard({
   );
 }
 
+// Platform-safe holographic shadow
+// Subtle shadow for holographic cards - should be understated
+const HOLOGRAPHIC_SHADOW = createShadow({
+  color: 'rgba(0, 0, 0, 0.08)',
+  offsetX: 0,
+  offsetY: 2,
+  opacity: 1,
+  radius: 8,
+  elevation: 2,
+});
+
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
     overflow: 'hidden',
-    // SIM-014: Softer shadow for more premium feel
-    shadowColor: 'rgba(120, 180, 220, 0.3)',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 6,
+    // SIM-014: Softer shadow for more premium feel (platform-safe)
+    ...HOLOGRAPHIC_SHADOW,
   },
   inactiveContainer: {
     backgroundColor: COLORS.glass,

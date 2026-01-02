@@ -115,8 +115,8 @@ export default function HomeScreen() {
     console.log(`Showing info for: ${ritualId}`);
   }, []);
 
-  // Header height for scroll offset
-  const headerHeight = insets.top + 80;
+  // Header height for scroll offset (smaller header = less offset needed)
+  const headerHeight = insets.top + 60;
 
   // Show skeleton while loading user data, daily log, or weight data
   if (loading || dailyLogLoading || weightLoading) {
@@ -146,7 +146,7 @@ export default function HomeScreen() {
       {/* Fixed header - uses real user name */}
       <HomeHeader 
         userName={userName} 
-        streakDays={7} // TODO: Calculate from daily_logs in future ticket
+        streakDays={0} // SIM-017: Will show when user has actual streak data
       />
 
       {/* Scrollable content */}
@@ -155,7 +155,7 @@ export default function HomeScreen() {
         contentContainerStyle={[
           styles.scrollContent,
           { 
-            paddingTop: headerHeight + 24,
+            paddingTop: headerHeight + 16,
             paddingBottom: insets.bottom + 100, // Space for tab bar
           },
         ]}

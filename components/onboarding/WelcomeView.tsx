@@ -10,8 +10,9 @@
  */
 
 import { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Dimensions, Platform } from 'react-native';
 import { hapticLight } from '../../utils/haptics';
+import { SHADOW, createTextShadow } from '../../utils/shadows';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -181,7 +182,7 @@ export default function WelcomeView({ slide, onSlideChange, onFinish }: Props) {
       
       {/* --- INTRO ANIMATION LAYER --- */}
       {!introFinished && (
-        <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
+        <View style={styles.introLayer}>
           {/* Centered Container for Orbit */}
           <View style={styles.centerContainer}>
             {/* Orbiting Container */}
@@ -274,6 +275,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Intro Layer with pointerEvents in style (web compatible)
+  introLayer: {
+    ...StyleSheet.absoluteFillObject,
+    pointerEvents: 'none',
+  },
   // Intro Styles
   centerContainer: {
     ...StyleSheet.absoluteFillObject,
@@ -337,9 +343,7 @@ const styles = StyleSheet.create({
   logoGlow: {
     position: 'absolute',
     color: '#f97316', // Orange glow behind
-    textShadowColor: '#f97316',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 20,
+    ...createTextShadow({ color: '#f97316', offsetX: 0, offsetY: 0, radius: 20 }),
   },
   logoAccent: {
     fontStyle: 'italic',
@@ -356,11 +360,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
+    ...SHADOW.md,
   },
   icon: {
     fontSize: 40,
@@ -400,11 +400,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     paddingVertical: 16,
     borderRadius: 50,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    ...SHADOW.md,
   },
   buttonText: {
     fontFamily: 'Manrope_600SemiBold',
