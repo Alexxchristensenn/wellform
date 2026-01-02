@@ -3,6 +3,8 @@
  * 
  * Educational content card with accordion expand behavior.
  * Displays bite-sized health education content.
+ * 
+ * @updated SIM-014: Uses theme tokens, improved press animations
  */
 
 import React, { useState } from 'react';
@@ -11,27 +13,21 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  Easing,
+  withSpring,
   FadeInUp,
 } from 'react-native-reanimated';
 import { BookOpen, ChevronDown } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
+import { STONE, COLORS, FONTS, TYPE, SPACING, RADII, SHADOWS } from '../../constants/theme';
+import { DURATION, EASING, SPRING, ANIMATION } from '../../constants/motion';
 
-// Design system colors
-const COLORS = {
-  stone900: '#1c1917',
-  stone800: '#292524',
-  stone600: '#57534e',
-  stone500: '#78716c',
-  stone400: '#a8a29e',
-  stone300: '#d6d3d1',
-  orange100: 'rgba(255, 237, 213, 0.8)',
-  orange200: '#fed7aa',
-  orange500: '#f97316',
-  orange600: '#ea580c',
-  orange900: '#7c2d12',
-  white: '#FFFFFF',
-  glassWhite: 'rgba(255, 255, 255, 0.75)',
-  border: 'rgba(255, 255, 255, 0.9)',
+// Orange accent colors for lessons (not in main theme as it's lesson-specific)
+const LESSON_ACCENT = {
+  bg: 'rgba(255, 237, 213, 0.8)',
+  border: '#fed7aa',
+  icon: '#f97316',
+  text: '#ea580c',
+  badge: '#7c2d12',
 };
 
 interface LessonCardProps {
@@ -54,20 +50,34 @@ export default function LessonCard({
   // Animation values
   const expandProgress = useSharedValue(0);
   const iconRotation = useSharedValue(0);
+  // SIM-014: Press scale for tactile feedback
+  const pressScale = useSharedValue(1);
 
   const toggleExpand = () => {
     const newExpanded = !expanded;
     setExpanded(newExpanded);
     
+    // SIM-014: Haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     expandProgress.value = withTiming(newExpanded ? 1 : 0, {
-      duration: 300,
-      easing: Easing.out(Easing.ease),
+      duration: DURATION.normal,
+      easing: EASING.decelerate,
     });
     
     iconRotation.value = withTiming(newExpanded ? 180 : 0, {
-      duration: 300,
-      easing: Easing.out(Easing.ease),
+      duration: DURATION.normal,
+      easing: EASING.decelerate,
     });
+  };
+  
+  // SIM-014: Press animation handlers
+  const handlePressIn = () => {
+    pressScale.value = withSpring(ANIMATION.pressScale, SPRING.snappy);
+  };
+  
+  const handlePressOut = () => {
+    pressScale.value = withSpring(1, SPRING.snappy);
   };
 
   // Animated styles
@@ -81,10 +91,20 @@ export default function LessonCard({
   const iconStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${iconRotation.value}deg` }],
   }));
+  
+  // SIM-014: Container press animation
+  const containerAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }],
+  }));
 
   return (
-    <Animated.View entering={FadeInUp.duration(500).delay(100)}>
-      <Pressable onPress={toggleExpand} style={styles.container}>
+    <Animated.View entering={FadeInUp.duration(DURATION.slow + 50).delay(DURATION.micro)}>
+      <Pressable 
+        onPress={toggleExpand}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+      >
+        <Animated.View style={[styles.container, containerAnimStyle]}>
         {/* Left accent border */}
         <View style={styles.accentBorder} />
         
@@ -93,7 +113,7 @@ export default function LessonCard({
           <View style={styles.badge}>
             <Text style={styles.badgeText}>GOLDEN RULE #{ruleNumber.toString().padStart(2, '0')}</Text>
           </View>
-          <BookOpen size={20} color={expanded ? COLORS.orange500 : COLORS.stone400} />
+          <BookOpen size={20} color={expanded ? LESSON_ACCENT.icon : STONE[400]} />
         </View>
 
         {/* Title */}
@@ -117,12 +137,13 @@ export default function LessonCard({
         {/* Footer */}
         <View style={styles.footer}>
           <Animated.View style={iconStyle}>
-            <ChevronDown size={14} color={expanded ? COLORS.stone900 : COLORS.stone500} />
+            <ChevronDown size={14} color={expanded ? STONE[900] : STONE[500]} />
           </Animated.View>
           <Text style={[styles.footerText, expanded && styles.footerTextActive]}>
             {expanded ? 'Tap to collapse' : `Read ${readTime} Lesson`}
           </Text>
         </View>
+        </Animated.View>
       </Pressable>
     </Animated.View>
   );
@@ -130,18 +151,14 @@ export default function LessonCard({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.glassWhite,
-    borderRadius: 28,
-    padding: 24,
+    backgroundColor: COLORS.glass,
+    borderRadius: RADII['3xl'],
+    padding: SPACING['2xl'],
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.glassBorder,
     borderLeftWidth: 4,
-    borderLeftColor: COLORS.orange200,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 15,
-    elevation: 4,
+    borderLeftColor: LESSON_ACCENT.border,
+    ...SHADOWS.sm,
     overflow: 'hidden',
   },
   accentBorder: {
@@ -150,74 +167,74 @@ const styles = StyleSheet.create({
     left: 0,
     bottom: 0,
     width: 4,
-    backgroundColor: COLORS.orange200,
+    backgroundColor: LESSON_ACCENT.border,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: SPACING.lg,
   },
   badge: {
-    backgroundColor: COLORS.orange100,
-    paddingHorizontal: 12,
+    backgroundColor: LESSON_ACCENT.bg,
+    paddingHorizontal: SPACING.md,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: RADII.xl,
   },
   badgeText: {
-    fontFamily: 'Manrope_700Bold',
+    fontFamily: FONTS.sansBold,
     fontSize: 10,
-    letterSpacing: 1.5,
-    color: COLORS.orange900,
+    letterSpacing: TYPE.labelSmall.letterSpacing,
+    color: LESSON_ACCENT.badge,
     textTransform: 'uppercase',
   },
   titleContainer: {
-    marginBottom: 12,
+    marginBottom: SPACING.md,
   },
   title: {
-    fontFamily: 'PlayfairDisplay_400Regular',
-    fontSize: 26,
-    color: COLORS.stone900,
-    lineHeight: 32,
+    fontFamily: FONTS.displayRegular,
+    fontSize: TYPE.headlineLarge.fontSize,
+    color: STONE[900],
+    lineHeight: TYPE.headlineLarge.lineHeight,
   },
   subtitle: {
     fontFamily: 'PlayfairDisplay_400Regular_Italic',
-    fontSize: 26,
-    color: COLORS.orange600,
+    fontSize: TYPE.headlineLarge.fontSize,
+    color: LESSON_ACCENT.text,
     fontStyle: 'italic',
-    lineHeight: 32,
+    lineHeight: TYPE.headlineLarge.lineHeight,
   },
   previewText: {
-    fontFamily: 'Manrope_400Regular',
-    fontSize: 16,
-    color: COLORS.stone600,
-    lineHeight: 24,
-    marginBottom: 16,
+    fontFamily: FONTS.sansRegular,
+    fontSize: TYPE.bodyLarge.fontSize,
+    color: STONE[600],
+    lineHeight: TYPE.bodyLarge.lineHeight,
+    marginBottom: SPACING.lg,
   },
   expandableContent: {
     overflow: 'hidden',
   },
   fullContent: {
-    fontFamily: 'Manrope_400Regular',
-    fontSize: 16,
-    color: COLORS.stone600,
-    lineHeight: 26,
+    fontFamily: FONTS.sansRegular,
+    fontSize: TYPE.bodyLarge.fontSize,
+    color: STONE[600],
+    lineHeight: TYPE.bodyLarge.lineHeight + 2,
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 8,
+    marginTop: SPACING.sm,
   },
   footerText: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 11,
-    letterSpacing: 1.5,
-    color: COLORS.stone500,
+    fontFamily: FONTS.sansBold,
+    fontSize: TYPE.labelSmall.fontSize,
+    letterSpacing: TYPE.labelSmall.letterSpacing,
+    color: STONE[500],
     textTransform: 'uppercase',
   },
   footerTextActive: {
-    color: COLORS.stone900,
+    color: STONE[900],
   },
 });
 

@@ -16,6 +16,7 @@
  * - "Quality over Quantity": No calorie counting
  * 
  * @see SIM-006 for implementation details
+ * @updated SIM-014: Uses theme tokens, respects Reduce Motion
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
@@ -25,7 +26,6 @@ import {
   StyleSheet,
   Modal,
   Pressable,
-  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -45,36 +45,15 @@ import { X, Check, Leaf, Drumstick, Sun, Coffee, Moon, Cookie, Sparkles } from '
 import * as Haptics from 'expo-haptics';
 import { MealType } from '../../types/schema';
 import { getPlateReact, PlateReact } from '../../services/contentBank';
+import { STONE, ACCENT, COLORS, FONTS, TYPE, SPACING, RADII, SHADOWS, BUTTON } from '../../constants/theme';
+import { DURATION, SPRING, EASING } from '../../constants/motion';
 
-// Design system colors
-const COLORS = {
-  stone900: '#1c1917',
-  stone800: '#292524',
-  stone700: '#44403c',
-  stone600: '#57534e',
-  stone500: '#78716c',
-  stone400: '#a8a29e',
-  stone300: '#d6d3d1',
-  stone200: '#e7e5e4',
-  stone100: '#f5f5f4',
-  stone50: '#fafaf9',
-  white: '#FFFFFF',
-  emerald500: '#10b981',
-  emerald600: '#059669',
-  emerald100: '#d1fae5',
-  amber500: '#f59e0b',
-  amber100: '#fef3c7',
-  rose500: '#f43f5e',
-  rose100: '#ffe4e6',
-  overlay: 'rgba(0, 0, 0, 0.5)',
-};
-
-// Meal type configuration
+// Meal type configuration - using theme accent colors
 const MEAL_CONFIG: Record<MealType, { label: string; icon: typeof Coffee; color: string }> = {
-  breakfast: { label: 'Breakfast', icon: Coffee, color: '#f59e0b' },
-  lunch: { label: 'Lunch', icon: Sun, color: '#10b981' },
-  dinner: { label: 'Dinner', icon: Moon, color: '#8b5cf6' },
-  snack: { label: 'Snack', icon: Cookie, color: '#ec4899' },
+  breakfast: { label: 'Breakfast', icon: Coffee, color: ACCENT.amber[500] },
+  lunch: { label: 'Lunch', icon: Sun, color: ACCENT.emerald[500] },
+  dinner: { label: 'Dinner', icon: Moon, color: ACCENT.purple[500] },
+  snack: { label: 'Snack', icon: Cookie, color: ACCENT.rose[500] },
 };
 
 // Satiety labels (Scientific/Witty per persona)
@@ -122,21 +101,21 @@ function FeedbackView({ reaction }: { reaction: PlateReact }) {
     switch (reaction.type) {
       case 'perfect':
         return { 
-          iconBg: COLORS.emerald100, 
-          iconColor: COLORS.emerald600,
-          borderColor: COLORS.emerald500,
+          iconBg: ACCENT.emerald[100], 
+          iconColor: ACCENT.emerald[600],
+          borderColor: ACCENT.emerald[500],
         };
       case 'meh':
         return { 
-          iconBg: COLORS.amber100, 
-          iconColor: COLORS.amber500,
-          borderColor: COLORS.amber500,
+          iconBg: ACCENT.amber[100], 
+          iconColor: ACCENT.amber[500],
+          borderColor: ACCENT.amber[500],
         };
       case 'oops':
         return { 
-          iconBg: COLORS.stone100, 
-          iconColor: COLORS.stone600,
-          borderColor: COLORS.stone400,
+          iconBg: STONE[100], 
+          iconColor: STONE[600],
+          borderColor: STONE[400],
         };
     }
   };
@@ -213,7 +192,7 @@ function MealSelector({
             ]}>
               <Icon 
                 size={20} 
-                color={isSelected ? config.color : COLORS.stone400} 
+                color={isSelected ? config.color : STONE[400]} 
               />
               {isLogged && (
                 <View style={styles.loggedBadge}>
@@ -267,12 +246,12 @@ function BehaviorToggle({
     const backgroundColor = interpolateColor(
       progress.value,
       [0, 1],
-      [COLORS.stone100, `${activeColor}15`]
+      [STONE[100], `${activeColor}15`]
     );
     const borderColor = interpolateColor(
       progress.value,
       [0, 1],
-      [COLORS.stone200, activeColor]
+      [STONE[200], activeColor]
     );
     return { backgroundColor, borderColor };
   });
@@ -281,7 +260,7 @@ function BehaviorToggle({
     const backgroundColor = interpolateColor(
       progress.value,
       [0, 1],
-      [COLORS.stone200, activeColor]
+      [STONE[200], activeColor]
     );
     return { backgroundColor };
   });
@@ -293,7 +272,7 @@ function BehaviorToggle({
     >
       <View style={styles.toggleContent}>
         <Animated.View style={[styles.toggleIconContainer, iconContainerStyle]}>
-          <Icon size={24} color={value ? COLORS.white : COLORS.stone500} />
+          <Icon size={24} color={value ? COLORS.white : STONE[500]} />
         </Animated.View>
         <View style={styles.toggleTextContainer}>
           <Text style={styles.toggleLabel}>{label}</Text>
@@ -463,7 +442,7 @@ export default function PlateCheckModal({
                   style={styles.closeButton}
                   accessibilityLabel="Close"
                 >
-                  <X size={24} color={COLORS.stone500} />
+                  <X size={24} color={STONE[500]} />
                 </Pressable>
               </View>
 
@@ -484,7 +463,7 @@ export default function PlateCheckModal({
                   value={hasProtein}
                   onChange={setHasProtein}
                   icon={Drumstick}
-                  activeColor={COLORS.rose500}
+                  activeColor={ACCENT.rose[500]}
                 />
 
                 <BehaviorToggle
@@ -493,7 +472,7 @@ export default function PlateCheckModal({
                   value={hasPlants}
                   onChange={setHasPlants}
                   icon={Leaf}
-                  activeColor={COLORS.emerald500}
+                  activeColor={ACCENT.emerald[500]}
                 />
               </View>
 
@@ -534,12 +513,12 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingTop: 8,
-    paddingHorizontal: 24,
+    borderTopLeftRadius: RADII['3xl'] + 4,
+    borderTopRightRadius: RADII['3xl'] + 4,
+    paddingTop: SPACING.sm,
+    paddingHorizontal: SPACING['2xl'],
     maxHeight: '92%',
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
@@ -549,55 +528,55 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingVertical: 16,
+    paddingVertical: SPACING.lg,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.stone100,
-    marginBottom: 20,
+    borderBottomColor: STONE[100],
+    marginBottom: SPACING.xl,
   },
   title: {
-    fontFamily: 'PlayfairDisplay_600SemiBold',
-    fontSize: 28,
-    color: COLORS.stone900,
+    fontFamily: FONTS.displaySemiBold,
+    fontSize: TYPE.displaySmall.fontSize,
+    color: STONE[900],
   },
   subtitle: {
-    fontFamily: 'Manrope_400Regular',
-    fontSize: 14,
-    color: COLORS.stone500,
+    fontFamily: FONTS.sansRegular,
+    fontSize: TYPE.bodyMedium.fontSize,
+    color: STONE[500],
     marginTop: 2,
   },
   closeButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.stone100,
+    borderRadius: RADII.full,
+    backgroundColor: STONE[100],
     justifyContent: 'center',
     alignItems: 'center',
   },
   // Meal Selector
   mealSelectorContainer: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 24,
+    gap: SPACING.sm + 2,
+    marginBottom: SPACING['2xl'],
   },
   mealButton: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 16,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: RADII.lg,
     borderWidth: 2,
-    borderColor: COLORS.stone200,
+    borderColor: STONE[200],
     backgroundColor: COLORS.white,
   },
   mealButtonSelected: {
-    backgroundColor: COLORS.stone50,
+    backgroundColor: STONE[50],
     borderWidth: 2,
   },
   mealIconContainer: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: COLORS.stone100,
+    borderRadius: RADII.md,
+    backgroundColor: STONE[100],
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 6,
@@ -608,42 +587,42 @@ const styles = StyleSheet.create({
     right: -4,
     width: 16,
     height: 16,
-    borderRadius: 8,
-    backgroundColor: COLORS.emerald500,
+    borderRadius: RADII.full,
+    backgroundColor: ACCENT.emerald[500],
     justifyContent: 'center',
     alignItems: 'center',
   },
   mealLabel: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 11,
-    color: COLORS.stone500,
+    fontFamily: FONTS.sansSemiBold,
+    fontSize: TYPE.labelSmall.fontSize,
+    color: STONE[500],
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   mealLabelSelected: {
-    color: COLORS.stone900,
+    color: STONE[900],
   },
   // Sections
   section: {
-    marginBottom: 24,
+    marginBottom: SPACING['2xl'],
   },
   sectionTitle: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 12,
-    color: COLORS.stone500,
+    fontFamily: FONTS.sansBold,
+    fontSize: TYPE.labelMedium.fontSize,
+    color: STONE[500],
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    marginBottom: 12,
+    letterSpacing: TYPE.labelMedium.letterSpacing,
+    marginBottom: SPACING.md,
   },
   // Behavior Toggle
   toggleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 20,
+    padding: SPACING.lg,
+    borderRadius: RADII.xl,
     borderWidth: 2,
-    marginBottom: 12,
+    marginBottom: SPACING.md,
   },
   toggleContent: {
     flexDirection: 'row',
@@ -653,31 +632,31 @@ const styles = StyleSheet.create({
   toggleIconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 14,
+    borderRadius: RADII.md + 2,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    marginRight: SPACING.md + 2,
   },
   toggleTextContainer: {
     flex: 1,
   },
   toggleLabel: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 16,
-    color: COLORS.stone900,
+    fontFamily: FONTS.sansBold,
+    fontSize: TYPE.bodyLarge.fontSize,
+    color: STONE[900],
     marginBottom: 2,
   },
   toggleQuestion: {
-    fontFamily: 'Manrope_400Regular',
-    fontSize: 13,
-    color: COLORS.stone500,
+    fontFamily: FONTS.sansRegular,
+    fontSize: TYPE.bodySmall.fontSize,
+    color: STONE[500],
   },
   toggleIndicator: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: RADII.full,
     borderWidth: 2,
-    borderColor: COLORS.stone300,
+    borderColor: STONE[300],
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -686,44 +665,44 @@ const styles = StyleSheet.create({
   },
   // Satiety Slider
   satietyContainer: {
-    marginBottom: 28,
+    marginBottom: SPACING['3xl'] - 4,
   },
   satietyTitle: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 12,
-    color: COLORS.stone500,
+    fontFamily: FONTS.sansBold,
+    fontSize: TYPE.labelMedium.fontSize,
+    color: STONE[500],
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    marginBottom: 16,
+    letterSpacing: TYPE.labelMedium.letterSpacing,
+    marginBottom: SPACING.lg,
   },
   satietyTrack: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 8,
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.sm,
   },
   satietyDotContainer: {
-    padding: 12,
+    padding: SPACING.md,
   },
   satietyDot: {
     width: 20,
     height: 20,
-    borderRadius: 10,
-    backgroundColor: COLORS.stone200,
+    borderRadius: RADII.full,
+    backgroundColor: STONE[200],
   },
   satietyDotActive: {
-    backgroundColor: COLORS.amber500,
+    backgroundColor: ACCENT.amber[500],
   },
   satietyDotCurrent: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: RADII.full,
     marginTop: -4,
     marginBottom: -4,
     borderWidth: 3,
     borderColor: COLORS.white,
-    shadowColor: COLORS.amber500,
+    shadowColor: ACCENT.amber[500],
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.4,
     shadowRadius: 4,
@@ -732,57 +711,53 @@ const styles = StyleSheet.create({
   satietyLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 12,
+    paddingHorizontal: SPACING.xl,
+    marginBottom: SPACING.md,
   },
   satietyLabelEnd: {
-    fontFamily: 'Manrope_500Medium',
-    fontSize: 12,
-    color: COLORS.stone400,
+    fontFamily: FONTS.sansMedium,
+    fontSize: TYPE.caption.fontSize,
+    color: STONE[400],
   },
   satietyValueContainer: {
     alignItems: 'center',
-    backgroundColor: COLORS.stone50,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 16,
+    backgroundColor: STONE[50],
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING['2xl'],
+    borderRadius: RADII.lg,
     alignSelf: 'center',
   },
   satietyValue: {
-    fontFamily: 'PlayfairDisplay_600SemiBold',
-    fontSize: 20,
-    color: COLORS.stone900,
+    fontFamily: FONTS.displaySemiBold,
+    fontSize: TYPE.headlineSmall.fontSize,
+    color: STONE[900],
   },
   satietyDescription: {
-    fontFamily: 'Manrope_400Regular',
-    fontSize: 13,
-    color: COLORS.stone500,
+    fontFamily: FONTS.sansRegular,
+    fontSize: TYPE.bodySmall.fontSize,
+    color: STONE[500],
     marginTop: 2,
   },
   // Submit Button
   submitButton: {
-    backgroundColor: COLORS.stone900,
-    borderRadius: 20,
-    paddingVertical: 20,
+    backgroundColor: BUTTON.primary.backgroundColor,
+    borderRadius: BUTTON.primary.borderRadius,
+    paddingVertical: SPACING.xl,
     alignItems: 'center',
-    shadowColor: COLORS.stone200,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 8,
+    ...SHADOWS.button,
   },
   submitButtonPressed: {
     transform: [{ scale: 0.98 }],
-    backgroundColor: '#000000',
+    backgroundColor: BUTTON.primary.pressedBackground,
   },
   submitButtonDisabled: {
-    backgroundColor: COLORS.stone300,
+    backgroundColor: STONE[300],
     shadowOpacity: 0,
     elevation: 0,
   },
   submitButtonText: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 18,
+    fontFamily: FONTS.sansBold,
+    fontSize: TYPE.titleLarge.fontSize,
     letterSpacing: 1,
     color: COLORS.white,
   },
@@ -791,32 +766,32 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 24,
+    paddingVertical: SPACING['4xl'],
+    paddingHorizontal: SPACING['2xl'],
     minHeight: 300,
   },
   feedbackIconContainer: {
     width: 100,
     height: 100,
-    borderRadius: 50,
+    borderRadius: RADII.full,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: SPACING['3xl'],
     borderWidth: 3,
   },
   feedbackText: {
-    fontFamily: 'Manrope_500Medium',
-    fontSize: 20,
-    color: COLORS.stone800,
+    fontFamily: FONTS.sansMedium,
+    fontSize: TYPE.headlineSmall.fontSize,
+    color: STONE[800],
     textAlign: 'center',
     lineHeight: 30,
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
   },
   feedbackHint: {
-    fontFamily: 'Manrope_400Regular',
-    fontSize: 12,
-    color: COLORS.stone400,
-    marginTop: 32,
+    fontFamily: FONTS.sansRegular,
+    fontSize: TYPE.caption.fontSize,
+    color: STONE[400],
+    marginTop: SPACING['3xl'],
     textTransform: 'lowercase',
     letterSpacing: 0.5,
   },

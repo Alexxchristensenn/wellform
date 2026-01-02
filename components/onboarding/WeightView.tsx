@@ -241,8 +241,6 @@ const styles = StyleSheet.create({
     color: '#1c1917',
     textAlign: 'center',
     minWidth: 100,
-    borderBottomWidth: 2,
-    borderBottomColor: '#f5f5f4',
     paddingBottom: 0,
   },
   weightUnit: {

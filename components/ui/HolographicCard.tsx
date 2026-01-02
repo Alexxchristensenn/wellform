@@ -1,11 +1,17 @@
 /**
- * HolographicCard - The Rainbow Shimmer Effect
+ * HolographicCard - Premium Rainbow Shimmer Effect
  * 
  * Recreates the CSS `rainbow-slide` animation using react-native-reanimated.
  * 
  * Technique: Since we can't animate background-position in RN, we create
  * an oversized LinearGradient (2x width) and animate its translateX position
  * to simulate the sliding effect. The gradient is clipped by the parent container.
+ * 
+ * SIM-014 Upgrades:
+ * - Subtle vertical drift for more "liquid" feel
+ * - Specular highlight sweep on activation
+ * - Reduced intensity for calm, restrained elegance
+ * - Respects Reduce Motion accessibility setting
  * 
  * CSS Reference:
  * @keyframes rainbow-slide {
@@ -25,97 +31,195 @@ import Animated, {
   withRepeat,
   withTiming,
   withSequence,
-  Easing,
+  withDelay,
   interpolate,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import { HOLOGRAPHIC, COLORS, SHADOWS, RADII } from '../../constants/theme';
+import { DURATION, TIMING, ANIMATION, EASING } from '../../constants/motion';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 interface HolographicCardProps {
   children: React.ReactNode;
   active?: boolean;
+  /** Trigger specular sweep animation (e.g., on completion) */
+  celebrate?: boolean;
   style?: ViewStyle;
   borderRadius?: number;
 }
 
-// Rainbow gradient colors (translating the CSS gradient)
+// SIM-014: More subtle, premium gradient colors
+// Reduced opacity for calm elegance, not flashy
 const GRADIENT_COLORS = [
-  'rgba(255, 255, 255, 0.95)',    // White at start
-  'rgba(255, 180, 190, 0.5)',     // Soft pink #ffb4be
-  'rgba(180, 240, 255, 0.5)',     // Soft cyan #b4f0ff
-  'rgba(255, 250, 180, 0.5)',     // Soft yellow #fffab4
-  'rgba(255, 255, 255, 0.95)',    // White at end
+  'rgba(255, 255, 255, 0.92)',    // Soft white
+  'rgba(255, 190, 200, 0.35)',    // Whisper pink
+  'rgba(190, 245, 255, 0.35)',    // Whisper cyan
+  'rgba(255, 252, 200, 0.35)',    // Whisper yellow
+  'rgba(255, 255, 255, 0.92)',    // Soft white
 ];
 
-// Gradient stops
-const GRADIENT_LOCATIONS: readonly [number, number, ...number[]] = [0.1, 0.3, 0.5, 0.7, 0.9];
+// Gradient stops - slightly tighter for more refined shimmer
+const GRADIENT_LOCATIONS: readonly [number, number, ...number[]] = [0.05, 0.28, 0.5, 0.72, 0.95];
+
+// Specular highlight for celebration sweep
+const SPECULAR_COLORS = [
+  'rgba(255, 255, 255, 0)',
+  'rgba(255, 255, 255, 0.6)',
+  'rgba(255, 255, 255, 0)',
+];
+const SPECULAR_LOCATIONS: readonly [number, number, ...number[]] = [0, 0.5, 1];
 
 export default function HolographicCard({
   children,
   active = true,
+  celebrate = false,
   style,
-  borderRadius = 28,
+  borderRadius = RADII['3xl'],
 }: HolographicCardProps) {
+  // Accessibility: Reduce Motion support
+  const { shouldReduceMotion, getAnimationConfig } = useReducedMotion();
+  const animConfig = getAnimationConfig();
+  
   // Container dimensions for pixel-based animation
   const [containerWidth, setContainerWidth] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
   
   // Animation progress value (0 to 1)
   const shimmerProgress = useSharedValue(0);
+  // SIM-014: Vertical drift for more organic "liquid" movement
+  const verticalDrift = useSharedValue(0);
   // Pop-in scale animation
-  const popScale = useSharedValue(active ? 0.95 : 1);
-  // Flash effect
-  const flashOpacity = useSharedValue(1);
+  const popScale = useSharedValue(active ? ANIMATION.popInStart : 1);
+  // Flash/glow effect
+  const glowIntensity = useSharedValue(1);
+  // SIM-014: Specular highlight sweep (triggered on celebrate)
+  const specularProgress = useSharedValue(-1);
 
   const handleLayout = (event: LayoutChangeEvent) => {
-    const { width } = event.nativeEvent.layout;
+    const { width, height } = event.nativeEvent.layout;
     setContainerWidth(width);
+    setContainerHeight(height);
   };
 
   useEffect(() => {
     if (active) {
       // Pop-in animation (mimics CSS pop-in-shimmer)
-      popScale.value = withSequence(
-        withTiming(1.02, { duration: 300, easing: Easing.out(Easing.back(1.5)) }),
-        withTiming(1, { duration: 200, easing: Easing.out(Easing.ease) })
-      );
+      // SIM-014: Respects Reduce Motion - uses subtle scale only
+      if (shouldReduceMotion) {
+        popScale.value = withTiming(1, { duration: DURATION.fast });
+      } else {
+        popScale.value = withSequence(
+          withTiming(ANIMATION.popInOvershoot, { 
+            duration: DURATION.normal, 
+            easing: EASING.bounce 
+          }),
+          withTiming(ANIMATION.popInEnd, { 
+            duration: DURATION.fast, 
+            easing: EASING.decelerate 
+          })
+        );
+      }
 
-      // Flash settle animation
-      flashOpacity.value = withSequence(
-        withTiming(1.15, { duration: 100 }),
-        withTiming(1, { duration: 800, easing: Easing.out(Easing.ease) })
-      );
+      // Glow settle animation
+      if (!shouldReduceMotion) {
+        glowIntensity.value = withSequence(
+          withTiming(1.1, { duration: DURATION.micro }),
+          withTiming(1, { 
+            duration: DURATION.deliberate, 
+            easing: EASING.decelerate 
+          })
+        );
+      }
 
-      // Continuous shimmer animation - uses reverse for smooth back-and-forth
-      // This creates a natural "light sweeping across surface" effect
-      // without the jarring jump that occurs with one-directional infinite scroll
-      shimmerProgress.value = withRepeat(
-        withTiming(1, {
-          duration: 3000,
-          easing: Easing.inOut(Easing.ease), // Smooth acceleration/deceleration
-        }),
-        -1,   // Infinite repeat
-        true  // Reverse direction each cycle for seamless loop
-      );
+      // SIM-014: Enhanced shimmer with slower, more premium duration
+      if (animConfig.enableShimmer) {
+        // Horizontal shimmer - slower for elegance (4 seconds vs 3)
+        shimmerProgress.value = withRepeat(
+          withTiming(1, { 
+            duration: 4000, 
+            easing: EASING.smooth 
+          }),
+          -1,
+          true
+        );
+        
+        // SIM-014: Subtle vertical drift - creates "liquid surface" illusion
+        // Offset cycle from horizontal for more organic movement
+        verticalDrift.value = withDelay(
+          500,
+          withRepeat(
+            withTiming(1, { 
+              duration: 5000, 
+              easing: EASING.smooth 
+            }),
+            -1,
+            true
+          )
+        );
+      }
     } else {
       shimmerProgress.value = 0;
+      verticalDrift.value = 0;
       popScale.value = 1;
-      flashOpacity.value = 1;
+      glowIntensity.value = 1;
     }
-  }, [active]);
+  }, [active, shouldReduceMotion]);
+
+  // SIM-014: Trigger specular sweep on celebrate prop change
+  useEffect(() => {
+    if (celebrate && !shouldReduceMotion) {
+      specularProgress.value = withSequence(
+        withTiming(0, { duration: 0 }),
+        withTiming(1, { 
+          duration: DURATION.deliberate, 
+          easing: EASING.decelerate 
+        }),
+        withTiming(2, { duration: 0 }) // Reset off-screen
+      );
+    }
+  }, [celebrate, shouldReduceMotion]);
 
   // Animated style for the gradient container
   // We translate the gradient to create the sliding effect
   const gradientContainerStyle = useAnimatedStyle(() => {
     // The gradient is 200% width, so we translate from 0 to -containerWidth
-    // This creates the effect of the gradient sliding through
     const translateX = interpolate(
       shimmerProgress.value,
       [0, 1],
       [0, -containerWidth]
     );
+    
+    // SIM-014: Subtle vertical drift for "liquid surface" effect
+    // Range is ±8px - enough to notice but not distracting
+    const translateY = interpolate(
+      verticalDrift.value,
+      [0, 0.5, 1],
+      [-8, 8, -8]
+    );
 
     return {
-      transform: [{ translateX }],
-      opacity: flashOpacity.value,
+      transform: [{ translateX }, { translateY }],
+      opacity: glowIntensity.value,
+    };
+  });
+
+  // SIM-014: Specular highlight sweep animation
+  const specularStyle = useAnimatedStyle(() => {
+    const translateX = interpolate(
+      specularProgress.value,
+      [-1, 0, 1, 2],
+      [-containerWidth * 0.5, -containerWidth * 0.3, containerWidth * 1.3, containerWidth * 2]
+    );
+    
+    const opacity = interpolate(
+      specularProgress.value,
+      [-1, 0, 0.5, 1, 2],
+      [0, 0.8, 1, 0.8, 0]
+    );
+
+    return {
+      transform: [{ translateX }, { rotate: '15deg' }],
+      opacity,
     };
   });
 
@@ -140,11 +244,15 @@ export default function HolographicCard({
     >
       {/* Clipping container */}
       <View style={[styles.gradientClip, { borderRadius }]}>
-        {/* The oversized gradient that slides */}
+        {/* SIM-014: Oversized gradient with vertical drift */}
         <Animated.View 
           style={[
             styles.gradientWrapper, 
-            { width: containerWidth * 2 },
+            { 
+              width: containerWidth * 2,
+              height: containerHeight + 24, // Extra height for vertical drift
+              top: -12, // Center the extra height
+            },
             gradientContainerStyle,
           ]}
         >
@@ -153,6 +261,23 @@ export default function HolographicCard({
             locations={GRADIENT_LOCATIONS}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
+            style={styles.gradient}
+          />
+        </Animated.View>
+        
+        {/* SIM-014: Specular highlight sweep (appears on celebrate) */}
+        <Animated.View 
+          style={[
+            styles.specularHighlight,
+            { height: containerHeight * 1.5 },
+            specularStyle,
+          ]}
+        >
+          <LinearGradient
+            colors={SPECULAR_COLORS}
+            locations={SPECULAR_LOCATIONS}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
             style={styles.gradient}
           />
         </Animated.View>
@@ -173,21 +298,18 @@ const styles = StyleSheet.create({
   container: {
     position: 'relative',
     overflow: 'hidden',
-    shadowColor: 'rgba(100, 200, 255, 0.4)',
-    shadowOffset: { width: 0, height: 10 },
+    // SIM-014: Softer shadow for more premium feel
+    shadowColor: 'rgba(120, 180, 220, 0.3)',
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 1,
-    shadowRadius: 25,
-    elevation: 8,
+    shadowRadius: 20,
+    elevation: 6,
   },
   inactiveContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    backgroundColor: COLORS.glass,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 15,
-    elevation: 4,
+    borderColor: COLORS.glassBorder,
+    ...SHADOWS.sm,
   },
   gradientClip: {
     ...StyleSheet.absoluteFillObject,
@@ -195,17 +317,21 @@ const styles = StyleSheet.create({
   },
   gradientWrapper: {
     position: 'absolute',
-    top: 0,
     left: 0,
-    height: '100%',
   },
   gradient: {
     flex: 1,
   },
+  // SIM-014: Specular highlight for celebration sweep
+  specularHighlight: {
+    position: 'absolute',
+    top: -50,
+    width: 80,
+  },
   border: {
     ...StyleSheet.absoluteFillObject,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.7)',
   },
   content: {
     position: 'relative',

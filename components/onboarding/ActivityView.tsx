@@ -223,8 +223,6 @@ const styles = StyleSheet.create({
     gap: 16,
     paddingTop: 16,
     paddingBottom: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#f5f5f4',
     backgroundColor: 'transparent',
   },
   backButton: {

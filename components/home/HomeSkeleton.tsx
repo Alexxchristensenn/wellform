@@ -7,6 +7,8 @@
  * SIM-007: Now displays witty loading lines from contentBank.
  * 
  * Uses Reanimated for smooth pulse animation.
+ * 
+ * @updated SIM-014: Uses theme tokens and respects Reduce Motion
  */
 
 import React, { useState } from 'react';
@@ -17,53 +19,66 @@ import Animated, {
   useAnimatedStyle,
   withRepeat,
   withTiming,
-  Easing,
   FadeIn,
 } from 'react-native-reanimated';
 import { Loader2 } from 'lucide-react-native';
 import { getLoadingLine } from '../../services/contentBank';
+import { COLORS, STONE, FONTS, TYPE, SPACING, RADII, SHADOWS } from '../../constants/theme';
+import { TIMING, EASING, DURATION } from '../../constants/motion';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
-// Design system colors
-const COLORS = {
-  skeleton: 'rgba(255, 255, 255, 0.6)',
-  skeletonHighlight: 'rgba(255, 255, 255, 0.9)',
-  border: 'rgba(255, 255, 255, 0.8)',
+// Skeleton-specific colors extending theme
+const SKELETON_COLORS = {
+  base: COLORS.glassSubtle,
+  highlight: COLORS.glassBorder,
+  border: COLORS.glassBorder,
 };
 
-// Skeleton pulse hook
+// Skeleton pulse hook - respects Reduce Motion
 function useSkeletonPulse() {
-  const opacity = useSharedValue(0.4);
+  const { shouldReduceMotion } = useReducedMotion();
+  const opacity = useSharedValue(shouldReduceMotion ? 0.7 : 0.4);
   
   React.useEffect(() => {
+    if (shouldReduceMotion) {
+      // Static state for reduced motion
+      opacity.value = 0.7;
+      return;
+    }
+    
     opacity.value = withRepeat(
-      withTiming(1, { 
-        duration: 1000, 
-        easing: Easing.inOut(Easing.ease) 
-      }),
+      withTiming(1, TIMING.pulse),
       -1,
       true
     );
-  }, []);
+  }, [shouldReduceMotion]);
   
   return useAnimatedStyle(() => ({
     opacity: opacity.value,
   }));
 }
 
-// Spinning loading icon hook
+// Spinning loading icon hook - respects Reduce Motion
 function useSpinAnimation() {
+  const { shouldReduceMotion } = useReducedMotion();
   const rotation = useSharedValue(0);
   
   React.useEffect(() => {
+    if (shouldReduceMotion) {
+      // Static state for reduced motion
+      rotation.value = 0;
+      return;
+    }
+    
     rotation.value = withRepeat(
       withTiming(360, { 
         duration: 1500, 
-        easing: Easing.linear 
+        easing: EASING.linear 
       }),
       -1,
       false
     );
-  }, []);
+  }, [shouldReduceMotion]);
   
   return useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
@@ -161,7 +176,7 @@ function SpinningLoader() {
   return (
     <View style={styles.loadingIconContainer}>
       <Animated.View style={spinStyle}>
-        <Loader2 size={18} color="#78716c" />
+        <Loader2 size={18} color={STONE[500]} />
       </Animated.View>
     </View>
   );
@@ -187,7 +202,7 @@ export default function HomeSkeleton() {
       
       {/* SIM-007: Witty loading toast */}
       <Animated.View 
-        entering={FadeIn.delay(400).duration(600)} 
+        entering={FadeIn.delay(DURATION.slow).duration(DURATION.deliberate)} 
         style={[styles.loadingToast, { bottom: insets.bottom + 100 }]}
       >
         <SpinningLoader />
@@ -204,88 +219,84 @@ const styles = StyleSheet.create({
   headerContainer: {
     position: 'absolute',
     top: 0,
-    left: 16,
-    right: 16,
+    left: SPACING.lg,
+    right: SPACING.lg,
     zIndex: 20,
-    backgroundColor: COLORS.skeleton,
-    borderRadius: 28,
+    backgroundColor: SKELETON_COLORS.base,
+    borderRadius: RADII['3xl'],
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: SKELETON_COLORS.border,
     overflow: 'hidden',
   },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.lg,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: SPACING.lg,
   },
   headerText: {
     gap: 2,
   },
   cardsContainer: {
-    paddingHorizontal: 16,
-    gap: 24,
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING['2xl'],
   },
   cardContainer: {
-    backgroundColor: COLORS.skeleton,
-    borderRadius: 28,
-    padding: 24,
+    backgroundColor: SKELETON_COLORS.base,
+    borderRadius: RADII['3xl'],
+    padding: SPACING['2xl'],
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: SKELETON_COLORS.border,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: SPACING.lg,
   },
   cardBody: {
-    gap: 4,
+    gap: SPACING.xs,
   },
   skeletonBox: {
-    backgroundColor: COLORS.skeletonHighlight,
+    backgroundColor: SKELETON_COLORS.highlight,
   },
   // SIM-007: Loading toast styles
   loadingToast: {
     position: 'absolute',
-    left: 20,
-    right: 20,
+    left: SPACING.xl,
+    right: SPACING.xl,
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 20,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    borderRadius: RADII.xl,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.xl,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 6,
+    gap: SPACING.md + 2,
+    ...SHADOWS.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
+    borderColor: COLORS.glassBorder,
   },
   loadingIconContainer: {
     width: 28,
     height: 28,
-    borderRadius: 14,
-    backgroundColor: '#f5f5f4',
+    borderRadius: RADII.full,
+    backgroundColor: STONE[100],
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 2,
   },
   loadingLine: {
     flex: 1,
-    fontFamily: 'Manrope_400Regular',
-    fontSize: 14,
-    color: '#57534e',
-    lineHeight: 22,
+    fontFamily: FONTS.sansRegular,
+    fontSize: TYPE.bodyMedium.fontSize,
+    color: STONE[600],
+    lineHeight: TYPE.bodyMedium.lineHeight,
   },
 });
 

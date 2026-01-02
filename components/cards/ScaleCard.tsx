@@ -10,6 +10,7 @@
  * - "Grandma Test" compliant: Large fonts, tactile inputs
  * 
  * @see SIM-005 for implementation details
+ * @updated SIM-014: Uses theme tokens for visual consistency
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
@@ -18,33 +19,8 @@ import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
 import Slider from '@react-native-community/slider';
 import { Scale, TrendingDown, TrendingUp, Minus, Info } from 'lucide-react-native';
 import HolographicCard from '../ui/HolographicCard';
-
-// Design system colors
-const COLORS = {
-  stone900: '#1c1917',
-  stone700: '#44403c',
-  stone600: '#57534e',
-  stone500: '#78716c',
-  stone400: '#a8a29e',
-  stone300: '#d6d3d1',
-  stone200: '#e7e5e4',
-  stone100: '#f5f5f4',
-  stone50: '#fafaf9',
-  // Calm colors - no alarming reds
-  sky100: '#e0f2fe',
-  sky200: '#bae6fd',
-  sky500: '#0ea5e9',
-  sky600: '#0284c7',
-  sky700: '#0369a1',
-  emerald100: '#d1fae5',
-  emerald500: '#10b981',
-  emerald600: '#059669',
-  amber100: '#fef3c7',
-  amber500: '#f59e0b',
-  amber600: '#d97706',
-  white: '#FFFFFF',
-  glassWhite: 'rgba(255, 255, 255, 0.75)',
-};
+import { STONE, ACCENT, COLORS, FONTS, TYPE, SPACING, RADII, SHADOWS, BUTTON } from '../../constants/theme';
+import { DURATION } from '../../constants/motion';
 
 // Conversion constants
 const KG_TO_LBS = 2.20462;
@@ -197,12 +173,12 @@ export default function ScaleCard({
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.iconContainer}>
-            <Scale size={20} color={COLORS.sky600} />
+            <Scale size={20} color={ACCENT.sky[600]} />
           </View>
           <Text style={styles.title}>The Scale</Text>
         </View>
         <Pressable style={styles.infoButton}>
-          <Info size={14} color={COLORS.stone400} />
+          <Info size={14} color={STONE[400]} />
         </Pressable>
       </View>
 
@@ -234,7 +210,7 @@ export default function ScaleCard({
             <View style={styles.trendIndicator}>
               <TrendIcon 
                 size={14} 
-                color={insight.isPositive ? COLORS.emerald600 : COLORS.amber600} 
+                color={insight.isPositive ? ACCENT.emerald[600] : ACCENT.amber[600]} 
               />
             </View>
           </View>
@@ -267,9 +243,9 @@ export default function ScaleCard({
               maximumValue={maxWeight}
               value={sliderValue}
               onValueChange={handleSliderChange}
-              minimumTrackTintColor={COLORS.sky500}
-              maximumTrackTintColor={COLORS.stone200}
-              thumbTintColor={COLORS.sky500}
+              minimumTrackTintColor={ACCENT.sky[500]}
+              maximumTrackTintColor={STONE[200]}
+              thumbTintColor={ACCENT.sky[500]}
               step={0.1}
             />
             
@@ -309,7 +285,7 @@ export default function ScaleCard({
         ]}>
           <TrendIcon 
             size={16} 
-            color={insight.isPositive ? COLORS.emerald600 : COLORS.amber600} 
+            color={insight.isPositive ? ACCENT.emerald[600] : ACCENT.amber[600]} 
           />
           <Text style={[
             styles.insightText,
@@ -323,8 +299,8 @@ export default function ScaleCard({
   );
 
   return (
-    <Animated.View entering={FadeInUp.duration(500).delay(100)}>
-      <HolographicCard active={hasLoggedToday} borderRadius={28}>
+    <Animated.View entering={FadeInUp.duration(DURATION.slow + 50).delay(DURATION.micro)}>
+      <HolographicCard active={hasLoggedToday} borderRadius={RADII['3xl']}>
         {cardContent}
       </HolographicCard>
     </Animated.View>
@@ -333,37 +309,37 @@ export default function ScaleCard({
 
 const styles = StyleSheet.create({
   innerContent: {
-    padding: 24,
+    padding: SPACING['2xl'],
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: SPACING['2xl'],
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: SPACING.md,
   },
   iconContainer: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: COLORS.sky100,
+    borderRadius: RADII.md,
+    backgroundColor: ACCENT.sky[100],
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
-    fontFamily: 'PlayfairDisplay_400Regular',
-    fontSize: 24,
-    color: COLORS.stone900,
+    fontFamily: FONTS.displayRegular,
+    fontSize: TYPE.headlineMedium.fontSize,
+    color: STONE[900],
   },
   infoButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.stone100,
+    borderRadius: RADII.full,
+    backgroundColor: STONE[100],
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -372,109 +348,109 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-around',
-    marginBottom: 20,
+    marginBottom: SPACING.xl,
   },
   weightSection: {
     alignItems: 'center',
     flex: 1,
   },
   weightLabel: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 11,
-    letterSpacing: 1.5,
-    color: COLORS.stone500,
-    marginBottom: 8,
+    fontFamily: FONTS.sansBold,
+    fontSize: TYPE.labelSmall.fontSize,
+    letterSpacing: TYPE.labelSmall.letterSpacing,
+    color: STONE[500],
+    marginBottom: SPACING.sm,
   },
   weightValueRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 4,
+    gap: SPACING.xs,
   },
   weightValue: {
-    fontFamily: 'PlayfairDisplay_600SemiBold',
-    fontSize: 42,
-    color: COLORS.stone900,
+    fontFamily: FONTS.displaySemiBold,
+    fontSize: TYPE.displayLarge.fontSize,
+    color: STONE[900],
   },
   weightUnit: {
-    fontFamily: 'Manrope_500Medium',
-    fontSize: 16,
-    color: COLORS.stone500,
+    fontFamily: FONTS.sansMedium,
+    fontSize: TYPE.bodyLarge.fontSize,
+    color: STONE[500],
   },
   trendValue: {
-    color: COLORS.sky700,
+    color: ACCENT.sky[700],
   },
   trendUnit: {
-    color: COLORS.sky600,
+    color: ACCENT.sky[600],
   },
   trendIndicator: {
-    marginTop: 4,
+    marginTop: SPACING.xs,
   },
   tapToLogHint: {
-    fontFamily: 'Manrope_500Medium',
-    fontSize: 12,
-    color: COLORS.sky600,
-    marginTop: 4,
+    fontFamily: FONTS.sansMedium,
+    fontSize: TYPE.caption.fontSize,
+    color: ACCENT.sky[600],
+    marginTop: SPACING.xs,
   },
   divider: {
     width: 1,
     height: 60,
-    backgroundColor: COLORS.stone200,
-    marginHorizontal: 16,
+    backgroundColor: STONE[200],
+    marginHorizontal: SPACING.lg,
   },
   // Insight message
   insightContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 14,
+    gap: SPACING.sm + 2,
+    paddingVertical: SPACING.md + 2,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADII.md + 2,
   },
   insightPositive: {
-    backgroundColor: COLORS.emerald100,
+    backgroundColor: ACCENT.emerald[100],
   },
   insightNeutral: {
-    backgroundColor: COLORS.amber100,
+    backgroundColor: ACCENT.amber[100],
   },
   insightText: {
-    fontFamily: 'Manrope_500Medium',
-    fontSize: 14,
+    fontFamily: FONTS.sansMedium,
+    fontSize: TYPE.bodyMedium.fontSize,
     flex: 1,
   },
   insightTextPositive: {
-    color: COLORS.emerald600,
+    color: ACCENT.emerald[600],
   },
   insightTextNeutral: {
-    color: COLORS.amber600,
+    color: ACCENT.amber[600],
   },
   // Editing mode
   editingContainer: {
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: SPACING.sm,
   },
   editingValueContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 8,
-    marginBottom: 24,
+    gap: SPACING.sm,
+    marginBottom: SPACING['2xl'],
   },
   editingValue: {
-    fontFamily: 'PlayfairDisplay_600SemiBold',
+    fontFamily: FONTS.displaySemiBold,
     fontSize: 56,
-    color: COLORS.stone900,
+    color: STONE[900],
     textAlign: 'center',
     minWidth: 140,
     padding: 0,
   },
   editingUnit: {
-    fontFamily: 'Manrope_500Medium',
-    fontSize: 20,
-    color: COLORS.stone500,
+    fontFamily: FONTS.sansMedium,
+    fontSize: TYPE.headlineSmall.fontSize,
+    color: STONE[500],
   },
   // Slider
   sliderContainer: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: SPACING['2xl'],
   },
   slider: {
     width: '100%',
@@ -483,44 +459,44 @@ const styles = StyleSheet.create({
   sliderLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 4,
-    paddingHorizontal: 4,
+    marginTop: SPACING.xs,
+    paddingHorizontal: SPACING.xs,
   },
   sliderLabel: {
-    fontFamily: 'Manrope_500Medium',
-    fontSize: 12,
-    color: COLORS.stone400,
+    fontFamily: FONTS.sansMedium,
+    fontSize: TYPE.caption.fontSize,
+    color: STONE[400],
   },
   // Action buttons
   editingActions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: SPACING.md,
     width: '100%',
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: 16,
-    borderRadius: 16,
-    backgroundColor: COLORS.stone100,
+    paddingVertical: SPACING.lg,
+    borderRadius: RADII.lg,
+    backgroundColor: BUTTON.secondary.backgroundColor,
     alignItems: 'center',
   },
   cancelButtonText: {
-    fontFamily: 'Manrope_600SemiBold',
+    fontFamily: FONTS.sansSemiBold,
     fontSize: 15,
-    color: COLORS.stone600,
+    color: BUTTON.secondary.textColor,
   },
   saveButton: {
     flex: 2,
-    paddingVertical: 16,
-    borderRadius: 16,
-    backgroundColor: COLORS.stone900,
+    paddingVertical: SPACING.lg,
+    borderRadius: RADII.lg,
+    backgroundColor: BUTTON.primary.backgroundColor,
     alignItems: 'center',
   },
   saveButtonDisabled: {
     opacity: 0.6,
   },
   saveButtonText: {
-    fontFamily: 'Manrope_700Bold',
+    fontFamily: FONTS.sansBold,
     fontSize: 15,
     color: COLORS.white,
   },

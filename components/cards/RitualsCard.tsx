@@ -3,37 +3,22 @@
  * 
  * Displays daily rituals (hydration, movement, etc.) with
  * interactive elements and educational "Why" tooltips.
+ * 
+ * @updated SIM-014: Uses theme tokens, improved press animations
  */
 
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import Animated, { FadeInUp } from 'react-native-reanimated';
+import Animated, { 
+  FadeInUp, 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring 
+} from 'react-native-reanimated';
 import { Droplet, Activity, Info } from 'lucide-react-native';
-
-// Design system colors
-const COLORS = {
-  stone900: '#1c1917',
-  stone800: '#292524',
-  stone600: '#57534e',
-  stone500: '#78716c',
-  stone400: '#a8a29e',
-  stone300: '#d6d3d1',
-  stone200: '#e7e5e4',
-  blue50: '#eff6ff',
-  blue100: '#dbeafe',
-  blue400: '#60a5fa',
-  blue500: '#3b82f6',
-  blue600: '#2563eb',
-  purple50: '#faf5ff',
-  purple100: '#f3e8ff',
-  purple400: '#c084fc',
-  purple500: '#a855f7',
-  purple600: '#9333ea',
-  white: '#FFFFFF',
-  glassWhite: 'rgba(255, 255, 255, 0.75)',
-  glassWhite60: 'rgba(255, 255, 255, 0.6)',
-  border: 'rgba(255, 255, 255, 0.9)',
-};
+import * as Haptics from 'expo-haptics';
+import { STONE, ACCENT, COLORS, FONTS, TYPE, SPACING, RADII, SHADOWS } from '../../constants/theme';
+import { DURATION, SPRING, ANIMATION } from '../../constants/motion';
 
 interface RitualItem {
   id: string;
@@ -65,10 +50,10 @@ const DEFAULT_RITUALS: RitualItem[] = [
     unit: 'Liters',
     icon: 'hydration',
     color: {
-      bg: COLORS.blue50,
-      icon: COLORS.blue500,
-      text: COLORS.blue600,
-      border: COLORS.blue400,
+      bg: ACCENT.sky[50],
+      icon: ACCENT.sky[500],
+      text: ACCENT.sky[600],
+      border: ACCENT.sky[200],
     },
   },
   {
@@ -79,10 +64,10 @@ const DEFAULT_RITUALS: RitualItem[] = [
     unit: 'mins goal',
     icon: 'movement',
     color: {
-      bg: COLORS.purple50,
-      icon: COLORS.purple500,
-      text: COLORS.purple600,
-      border: COLORS.purple400,
+      bg: ACCENT.purple[50],
+      icon: ACCENT.purple[500],
+      text: ACCENT.purple[600],
+      border: ACCENT.purple[100],
     },
   },
 ];
@@ -109,39 +94,59 @@ function RitualRow({
   onPress?: () => void;
   onInfoPress?: () => void;
 }) {
+  // SIM-014: Press scale animation
+  const pressScale = useSharedValue(1);
+  
+  const handlePressIn = () => {
+    pressScale.value = withSpring(ANIMATION.pressScale, SPRING.snappy);
+  };
+  
+  const handlePressOut = () => {
+    pressScale.value = withSpring(1, SPRING.snappy);
+  };
+  
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    (onPress || onInfoPress)?.();
+  };
+  
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }],
+  }));
+  
   return (
     <Pressable
-      onPress={onPress || onInfoPress}
-      style={({ pressed }) => [
-        styles.ritualRow,
-        pressed && styles.ritualRowPressed,
-      ]}
+      onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
     >
-      <View style={styles.ritualContent}>
-        <View style={[styles.ritualIcon, { backgroundColor: ritual.color.bg }]}>
-          <RitualIcon type={ritual.icon} color={ritual.color.icon} />
+      <Animated.View style={[styles.ritualRow, animatedStyle]}>
+        <View style={styles.ritualContent}>
+          <View style={[styles.ritualIcon, { backgroundColor: ritual.color.bg }]}>
+            <RitualIcon type={ritual.icon} color={ritual.color.icon} />
+          </View>
+          <View style={styles.ritualInfo}>
+            <Text style={styles.ritualName}>{ritual.name}</Text>
+            <Text style={styles.ritualProgress}>
+              {ritual.current} / {ritual.target} {ritual.unit}
+            </Text>
+          </View>
         </View>
-        <View style={styles.ritualInfo}>
-          <Text style={styles.ritualName}>{ritual.name}</Text>
-          <Text style={styles.ritualProgress}>
-            {ritual.current} / {ritual.target} {ritual.unit}
-          </Text>
-        </View>
-      </View>
-      
-      <Pressable
-        onPress={onInfoPress}
-        style={({ pressed }) => [
-          styles.infoCircle,
-          pressed && { borderColor: ritual.color.border },
-        ]}
-      >
-        <Info 
-          size={12} 
-          color={COLORS.stone300} 
-          style={styles.infoIcon}
-        />
-      </Pressable>
+        
+        <Pressable
+          onPress={onInfoPress}
+          style={({ pressed }) => [
+            styles.infoCircle,
+            pressed && { borderColor: ritual.color.border },
+          ]}
+        >
+          <Info 
+            size={12} 
+            color={STONE[300]} 
+            style={styles.infoIcon}
+          />
+        </Pressable>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -152,7 +157,7 @@ export default function RitualsCard({
   onInfoPress,
 }: RitualsCardProps) {
   return (
-    <Animated.View entering={FadeInUp.duration(500).delay(300)}>
+    <Animated.View entering={FadeInUp.duration(DURATION.slow + 50).delay(DURATION.normal)}>
       <View style={styles.container}>
         <Text style={styles.title}>Daily Rituals</Text>
         
@@ -173,53 +178,41 @@ export default function RitualsCard({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.glassWhite,
-    borderRadius: 28,
-    padding: 24,
+    backgroundColor: COLORS.glass,
+    borderRadius: RADII['3xl'],
+    padding: SPACING['2xl'],
     borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 15,
-    elevation: 4,
+    borderColor: COLORS.glassBorder,
+    ...SHADOWS.sm,
   },
   title: {
-    fontFamily: 'PlayfairDisplay_400Regular',
-    fontSize: 26,
-    color: COLORS.stone900,
-    marginBottom: 24,
+    fontFamily: FONTS.displayRegular,
+    fontSize: TYPE.headlineLarge.fontSize,
+    color: STONE[900],
+    marginBottom: SPACING['2xl'],
   },
   ritualsList: {
-    gap: 16,
+    gap: SPACING.lg,
   },
   ritualRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.glassWhite60,
-    borderRadius: 20,
-    padding: 16,
+    backgroundColor: COLORS.glassSubtle,
+    borderRadius: RADII.xl,
+    padding: SPACING.lg,
     borderWidth: 1,
     borderColor: COLORS.white,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.02,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  ritualRowPressed: {
-    backgroundColor: COLORS.white,
   },
   ritualContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: SPACING.lg,
   },
   ritualIcon: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: RADII.full,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -227,23 +220,23 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   ritualName: {
-    fontFamily: 'PlayfairDisplay_400Regular',
-    fontSize: 18,
-    color: COLORS.stone800,
+    fontFamily: FONTS.displayRegular,
+    fontSize: TYPE.titleLarge.fontSize,
+    color: STONE[800],
   },
   ritualProgress: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 11,
+    fontFamily: FONTS.sansBold,
+    fontSize: TYPE.labelSmall.fontSize,
     letterSpacing: 1.2,
-    color: COLORS.stone500,
+    color: STONE[500],
     textTransform: 'uppercase',
   },
   infoCircle: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: RADII.full,
     borderWidth: 2,
-    borderColor: COLORS.stone200,
+    borderColor: STONE[200],
     justifyContent: 'center',
     alignItems: 'center',
   },

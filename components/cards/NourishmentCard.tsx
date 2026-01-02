@@ -9,6 +9,8 @@
  * - "Habit > Number": Show "2/3 Protein Goals Hit" not "1,250 kcal"
  * - Holographic reward: Visual delight when protein is logged
  * - One clear CTA: "Check In" button for Plate Check modal
+ * 
+ * @updated SIM-014: Uses theme tokens for visual consistency
  */
 
 import React from 'react';
@@ -17,23 +19,8 @@ import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
 import { Drumstick, Leaf, CheckCircle, ChevronRight } from 'lucide-react-native';
 import HolographicCard from '../ui/HolographicCard';
 import { DayStats, MealType } from '../../types/schema';
-
-// Design system colors
-const COLORS = {
-  stone900: '#1c1917',
-  stone700: '#44403c',
-  stone600: '#57534e',
-  stone500: '#78716c',
-  stone400: '#a8a29e',
-  stone200: '#e7e5e4',
-  stone100: '#f5f5f4',
-  white: '#FFFFFF',
-  emerald500: '#10b981',
-  emerald100: '#d1fae5',
-  rose500: '#f43f5e',
-  rose100: '#ffe4e6',
-  amber500: '#f59e0b',
-};
+import { STONE, ACCENT, COLORS, FONTS, TYPE, SPACING, RADII, SHADOWS, BUTTON } from '../../constants/theme';
+import { DURATION } from '../../constants/motion';
 
 // Meal display names
 const MEAL_LABELS: Record<MealType, string> = {
@@ -101,7 +88,7 @@ function MealDots({ mealsLogged }: { mealsLogged: MealType[] }) {
             ]}
           >
             {isLogged ? (
-              <CheckCircle size={12} color={COLORS.emerald500} />
+              <CheckCircle size={12} color={ACCENT.emerald[500]} />
             ) : (
               <Text style={styles.mealDotText}>{MEAL_LABELS[meal]}</Text>
             )}
@@ -143,7 +130,7 @@ export default function NourishmentCard({
       {/* Habit Progress */}
       {hasMealsLogged ? (
         <Animated.View 
-          entering={FadeIn.duration(400)}
+          entering={FadeIn.duration(DURATION.slow)}
           style={styles.habitsRow}
         >
           <HabitProgress
@@ -152,9 +139,9 @@ export default function NourishmentCard({
             hits={proteinHits}
             total={proteinTotal}
             color={{
-              bg: COLORS.rose100,
-              icon: COLORS.rose500,
-              text: COLORS.rose500,
+              bg: ACCENT.rose[100],
+              icon: ACCENT.rose[500],
+              text: ACCENT.rose[500],
             }}
           />
           <View style={styles.habitsDivider} />
@@ -164,9 +151,9 @@ export default function NourishmentCard({
             hits={plantsHits}
             total={plantsTotal}
             color={{
-              bg: COLORS.emerald100,
-              icon: COLORS.emerald500,
-              text: COLORS.emerald500,
+              bg: ACCENT.emerald[100],
+              icon: ACCENT.emerald[500],
+              text: ACCENT.emerald[500],
             }}
           />
         </Animated.View>
@@ -193,8 +180,8 @@ export default function NourishmentCard({
   );
 
   return (
-    <Animated.View entering={FadeInUp.duration(500).delay(200)}>
-      <HolographicCard active={showHolographic} borderRadius={28}>
+    <Animated.View entering={FadeInUp.duration(DURATION.slow + 50).delay(DURATION.fast)}>
+      <HolographicCard active={showHolographic} borderRadius={RADII['3xl']}>
         {cardContent}
       </HolographicCard>
     </Animated.View>
@@ -203,24 +190,25 @@ export default function NourishmentCard({
 
 const styles = StyleSheet.create({
   innerContent: {
-    padding: 24,
+    padding: SPACING['2xl'],
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 20,
+    marginBottom: SPACING.xl,
   },
   title: {
-    fontFamily: 'PlayfairDisplay_400Regular',
-    fontSize: 26,
-    color: COLORS.stone900,
-    marginBottom: 4,
+    fontFamily: FONTS.displayRegular,
+    fontSize: TYPE.headlineLarge.fontSize,
+    lineHeight: TYPE.headlineLarge.lineHeight,
+    color: STONE[900],
+    marginBottom: SPACING.xs,
   },
   subtitle: {
-    fontFamily: 'Manrope_500Medium',
-    fontSize: 13,
-    color: COLORS.stone500,
+    fontFamily: FONTS.sansMedium,
+    fontSize: TYPE.bodySmall.fontSize,
+    color: STONE[500],
   },
   // Meal Dots
   mealDotsContainer: {
@@ -230,38 +218,38 @@ const styles = StyleSheet.create({
   mealDot: {
     width: 28,
     height: 28,
-    borderRadius: 14,
-    backgroundColor: COLORS.stone100,
+    borderRadius: RADII.full,
+    backgroundColor: STONE[100],
     borderWidth: 1,
-    borderColor: COLORS.stone200,
+    borderColor: STONE[200],
     justifyContent: 'center',
     alignItems: 'center',
   },
   mealDotLogged: {
-    backgroundColor: COLORS.emerald100,
-    borderColor: COLORS.emerald500,
+    backgroundColor: ACCENT.emerald[100],
+    borderColor: ACCENT.emerald[500],
   },
   mealDotText: {
-    fontFamily: 'Manrope_600SemiBold',
+    fontFamily: FONTS.sansSemiBold,
     fontSize: 10,
-    color: COLORS.stone400,
+    color: STONE[400],
   },
   // Habits Row
   habitsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: COLORS.glassSubtle,
+    borderRadius: RADII.xl,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
     borderWidth: 1,
     borderColor: COLORS.white,
   },
   habitsDivider: {
     width: 1,
     height: 40,
-    backgroundColor: COLORS.stone200,
-    marginHorizontal: 16,
+    backgroundColor: STONE[200],
+    marginHorizontal: SPACING.lg,
   },
   habitContainer: {
     flex: 1,
@@ -271,62 +259,58 @@ const styles = StyleSheet.create({
   habitIconContainer: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: RADII.sm + 2,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: SPACING.sm + 2,
   },
   habitTextContainer: {
     flex: 1,
   },
   habitLabel: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 12,
-    color: COLORS.stone500,
+    fontFamily: FONTS.sansSemiBold,
+    fontSize: TYPE.caption.fontSize,
+    color: STONE[500],
     marginBottom: 2,
   },
   habitValue: {
-    fontFamily: 'PlayfairDisplay_600SemiBold',
-    fontSize: 20,
+    fontFamily: FONTS.displaySemiBold,
+    fontSize: TYPE.headlineSmall.fontSize,
   },
   // Empty State
   emptyState: {
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 16,
+    backgroundColor: COLORS.glassSubtle,
+    borderRadius: RADII.xl,
+    padding: SPACING['2xl'],
+    marginBottom: SPACING.lg,
     borderWidth: 1,
     borderColor: COLORS.white,
     alignItems: 'center',
   },
   emptyStateText: {
-    fontFamily: 'Manrope_500Medium',
-    fontSize: 14,
-    color: COLORS.stone500,
+    fontFamily: FONTS.sansMedium,
+    fontSize: TYPE.bodyMedium.fontSize,
+    color: STONE[500],
     textAlign: 'center',
   },
-  // Check In Button
+  // Check In Button - Uses BUTTON tokens
   checkInButton: {
-    backgroundColor: COLORS.stone900,
+    backgroundColor: BUTTON.primary.backgroundColor,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 18,
-    borderRadius: 20,
-    shadowColor: COLORS.stone200,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 8,
+    gap: SPACING.sm,
+    paddingVertical: BUTTON.primary.paddingVertical,
+    borderRadius: BUTTON.primary.borderRadius,
+    ...SHADOWS.button,
   },
   checkInButtonPressed: {
     transform: [{ scale: 0.98 }],
-    backgroundColor: '#000000',
+    backgroundColor: BUTTON.primary.pressedBackground,
   },
   checkInButtonText: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 14,
+    fontFamily: FONTS.sansBold,
+    fontSize: TYPE.labelLarge.fontSize,
     letterSpacing: 2,
     color: COLORS.white,
     textTransform: 'uppercase',

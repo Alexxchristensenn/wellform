@@ -19,6 +19,8 @@ import RitualsCard from '../cards/RitualsCard';
 import ScaleCard from '../cards/ScaleCard';
 import { GoldenRule } from '../../services/content';
 import { DayStats } from '../../types/schema';
+import { SPACING } from '../../constants/theme';
+import { DURATION } from '../../constants/motion';
 
 interface DailyPulseFeedProps {
   // Nourishment state (SIM-006: Now behavior-based)
@@ -163,7 +165,7 @@ export default function DailyPulseFeed({
   };
 
   return (
-    <Animated.View entering={FadeIn.duration(500)} style={styles.container}>
+    <Animated.View entering={FadeIn.duration(DURATION.slow + 50)} style={styles.container}>
       {cardOrder.map((cardType, index) => renderCard(cardType, index))}
     </Animated.View>
   );
@@ -171,7 +173,7 @@ export default function DailyPulseFeed({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 24,
+    gap: SPACING['2xl'],
   },
   cardWrapper: {
     // Individual card wrapper for consistent spacing

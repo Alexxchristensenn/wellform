@@ -1,87 +1,52 @@
-﻿ðŸš€ Major Features Tracking
+﻿# 🚀 Major Features Tracking
 
-ID
+| ID | Feature | Status | Ticket | MVP? | Notes |
+|----|---------|--------|--------|------|-------|
+| F-01 | Project Foundation | 🔴 Pending | [SIM-001] | ✅ | StyleSheet, Reanimated, Firebase, OpenAI Setup |
+| F-02 | Onboarding Flow | 🔴 Pending | [SIM-002] | ✅ | "Narrative Journey" (Name, Age, Height, Weight) |
+| F-03 | The Daily Pulse | 🔴 Pending | [SIM-003] | ✅ | Time-aware Home Screen |
+| F-04 | AI Camera (Vision) | 🔴 Pending | [SIM-004] | ✅ | gpt-4o-mini Integration (Premium Feature) |
+| F-05 | The Coach (Chat) | 🔴 Pending | [SIM-005] | ❌ | Context-aware LLM Chat |
+| F-06 | Auth & Profile | 🔴 Pending | [SIM-006] | ✅ | Apple/Google Sign-in & Data Linking |
+| F-14 | Premium Vibe Pass | 🟢 Complete | [SIM-014] | ✅ | Design tokens, motion system, holographic upgrade, micro-delight |
 
-Feature
+Status Legend: 🔴 Pending | 🟡 In Progress | 🟢 Complete | 🧊 Icebox
 
-Status
+---
 
-Ticket
+## F-14: Premium Vibe Pass (SIM-014) - Complete
 
-MVP?
+### Deliverables
+1. **Design Tokens** (`constants/theme.ts`)
+   - Centralized color palette (STONE, ACCENT, HOLOGRAPHIC)
+   - Typography scale with Playfair/Manrope fonts
+   - Spacing, radii, shadows, button/card tokens
 
-Notes
+2. **Motion System** (`constants/motion.ts`)
+   - Duration scale (micro→ambient)
+   - Spring presets (snappy, responsive, gentle, bouncy)
+   - Timing presets (fadeIn, slideEnter, shimmer, pulse)
+   - Haptic pairing rules
 
-F-01
+3. **Accessibility** (`hooks/useReducedMotion.ts`)
+   - Detects system Reduce Motion setting
+   - Provides fallback animation configs
+   - Disables shimmer/ambient animations when enabled
 
-Project Foundation
+4. **Holographic Upgrade** (`components/ui/HolographicCard.tsx`)
+   - Subtle vertical drift for "liquid surface" effect
+   - Specular highlight sweep on celebration
+   - Reduced opacity for calm elegance
+   - Respects Reduce Motion
 
-ðŸ”´ Pending
+5. **Micro-Delight** (`components/ui/MicroDelight.tsx`)
+   - Animated stick-figure weightlifter
+   - Triggers on meaningful wins only
+   - 2-second auto-dismiss, tap to skip
+   - Respects Reduce Motion
 
-[SIM-001]
-
-âœ…
-
-StyleSheet, Reanimated, Firebase, OpenAI Setup
-
-F-02
-
-Onboarding Flow
-
-ðŸ”´ Pending
-
-[SIM-002]
-
-âœ…
-
-"Narrative Journey" (Name, Age, Height, Weight)
-
-F-03
-
-The Daily Pulse
-
-ðŸ”´ Pending
-
-[SIM-003]
-
-âœ…
-
-Time-aware Home Screen
-
-F-04
-
-AI Camera (Vision)
-
-ðŸ”´ Pending
-
-[SIM-004]
-
-âœ…
-
-gpt-4o-mini Integration (Premium Feature)
-
-F-05
-
-The Coach (Chat)
-
-ðŸ”´ Pending
-
-[SIM-005]
-
-âŒ
-
-Context-aware LLM Chat
-
-F-06
-
-Auth & Profile
-
-ðŸ”´ Pending
-
-[SIM-006]
-
-âœ…
-
-Apple/Google Sign-in & Data Linking
-
-Status Legend: ðŸ”´ Pending | ðŸŸ¡ In Progress | ðŸŸ¢ Complete | ðŸ§Š Icebox
+6. **QA Polish**
+   - All cards use theme tokens
+   - Consistent press animations (scale 0.98, spring.snappy)
+   - Haptic feedback on interactions
+   - Updated `docs/technical.md` with motion spec
